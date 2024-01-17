@@ -10,12 +10,24 @@ VRR_ARGS=""
 SDR_GAMUT="--sdr-gamut-wideness 1"
 CURSORCMD="--cursor-scale-height 48 --cursor ${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow.png"
 
+# MangoApp configuration
+export STEAM_USE_MANGOAPP=1
+export STEAM_DISABLE_MANGOAPP_ATOM_WORKAROUND=1
+export STEAM_MANGOAPP_PRESETS_SUPPORTED=1
+export STEAM_MANGOAPP_HORIZONTAL_SUPPORTED=1
+
+# Performance configuration
+export STEAM_GAMESCOPE_FANCY_SCALING_SUPPORT=1
+export STEAM_GAMESCOPE_DYNAMIC_FPSLIMITER=1
+export STEAM_GAMESCOPE_HAS_TEARING_SUPPORT=1
+export STEAM_GAMESCOPE_COLOR_TOYS=1
+export STEAM_GAMESCOPE_TEARING_SUPPORTED=1
+
 # General support
 export STEAM_DISPLAY_REFRESH_LIMITS=30,40,60
 export STEAM_MULTIPLE_XWAYLANDS=1
-export STEAM_MANGOAPP_PRESETS_SUPPORTED=1
-export MANGOHUD=1
 export XCURSOR_SIZE=1024
+export XCURSOR_THEME=steam
 
 # RayTracing support
 export VKVD3D_CONFIG=dxr11,dxr
