@@ -1,0 +1,35 @@
+#!/bin/bash
+
+export vk_xwayland_wait_ready=false
+export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
+
+# Preparing gamescope session run arguments
+STEAMCMD="-- steam -gamepadui -steamos -steamdeck -steampal"
+RESOLUTION=""
+VRR_ARGS=""
+SDR_GAMUT="--sdr-gamut-wideness 1"
+CURSORCMD="--cursor-scale-height 48 --cursor ${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow.png"
+
+# General support
+export STEAM_DISPLAY_REFRESH_LIMITS=30,40,60
+export STEAM_MULTIPLE_XWAYLANDS=1
+export STEAM_MANGOAPP_PRESETS_SUPPORTED-1
+export MANGOHUD=1
+export XCURSOR_SIZE=1024
+
+# RayTracing support
+export VKVD3D_CONFIG=dxr11,dxr
+export VKVD3D_FEATURE_LEVEL=12_2
+
+gamescope -e \
+	$CURSOR \
+	$RESOLUTION \
+	$VRR_ARGS \
+	--xwayland-count 2 \
+	--adaptive-sync \
+	-O *,eDP-1 \
+	-f \
+	--default-touch-mode 4 \
+	--hide-cursor-delay 3000 \
+	--fade-out-duration 200 \
+	$STEAMCMD
