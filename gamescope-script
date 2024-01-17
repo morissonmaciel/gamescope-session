@@ -3,13 +3,6 @@
 export vk_xwayland_wait_ready=false
 export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
 
-# Preparing gamescope session run arguments
-STEAMCMD="-- steam -gamepadui -steamos -steamdeck -steampal"
-RESOLUTION=""
-VRR_ARGS=""
-SDR_GAMUT="--sdr-gamut-wideness 1"
-CURSORCMD="--cursor-scale-height 48 --cursor ${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow.png"
-
 # MangoApp configuration
 export STEAM_USE_MANGOAPP=1
 export STEAM_DISABLE_MANGOAPP_ATOM_WORKAROUND=1
@@ -33,10 +26,19 @@ export XCURSOR_THEME=steam
 export VKVD3D_CONFIG=dxr11,dxr
 export VKVD3D_FEATURE_LEVEL=12_2
 
+# Preparing gamescope session run arguments
+STEAMCMD="-- steam -gamepadui -steamos -steamdeck -steampal"
+RESOLUTION=""
+VRR_ARGS=""
+SDR_GAMUT="--sdr-gamut-wideness 1"
+CURSORCMD="--cursor-scale-height 48 --cursor ${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow.png"
+
 gamescope -e \
 	$CURSOR \
 	$RESOLUTION \
 	$VRR_ARGS \
+    --max-scale 2 \
+    --expose-wayland \
 	--xwayland-count 2 \
 	--adaptive-sync \
 	-O *,eDP-1 \
