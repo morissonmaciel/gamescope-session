@@ -13,7 +13,7 @@ CURSORCMD="--cursor-scale-height 48 --cursor ${HOME}/.local/share/Steam/tenfoot/
 # General support
 export STEAM_DISPLAY_REFRESH_LIMITS=30,40,60
 export STEAM_MULTIPLE_XWAYLANDS=1
-export STEAM_MANGOAPP_PRESETS_SUPPORTED-1
+export STEAM_MANGOAPP_PRESETS_SUPPORTED=1
 export MANGOHUD=1
 export XCURSOR_SIZE=1024
 
