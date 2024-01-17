@@ -1,0 +1,37 @@
+#!/bin/bash
+
+GAMESCOPE_SCRIPT_FILE="/usr/share/gamescope-custom/gamescope-script"
+sudo mkdir -p "$(dirname "$GAMESCOPE_SCRIPT_FILE")"
+
+SCRIPT_CONTENTS="$( wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/gamescope-script )"
+echo "${SCRIPT_CONTENTS}" | sudo tee $GAMESCOPE_SCRIPT_FILE
+sudo chmod +x $GAMESCOPE_SCRIPT_FILE
+
+DESKTOP_FILE="/usr/share/wayland-sessions/gamescope-custom.desktop"
+DESKTOP_CONTENTS="$( wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/gamescope-custom.desktop )"
+echo "${DESKTOP_CONTENTS}" | sudo tee $DESKTOP_FILE
+
+sudo zypper -n in lightdm
+sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/lightdm
+
+SYSCONF_FILE="/etc/sysconfig/displaymanager"
+OLD_SYSCONF_FILE="/etc/sysconfig/.displaymanager.old"
+
+if [ ! -f $OLD_SYSCONF_FILE ]; then
+  sudo cp $SYSCONF_FILE $OLD_SYSCONF_FILE
+fi
+
+SYSCONF_CONTENTS="$( wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/displaymanager )"
+echo "${SYSCONF_CONTENTS}" | sudo tee $SYSCONF_FILE
+
+LIGHTDM_FILE="/usr/share/lightdm/lightdm.conf.d/50-suse-defaults.conf"
+OLD_LIGHTDM_FILE="/usr/share/lightdm/lightdm.conf.d/_50-suse-defaults.old"
+
+if [ ! -f $OLD_LIGHTDM_FILE ]; then
+  sudo cp $LIGHTDM_FILE $OLD_LIGHTDM_FILE
+fi
+
+LIGHTDM_CONTENTS="$( wget -qO- --no-cache https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/50-suse-defaults.conf )"
+echo "${LIGHTDM_CONTENTS}" | sudo tee $LIGHTDM_FILE
+
+sudo reboot -f
