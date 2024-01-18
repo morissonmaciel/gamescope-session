@@ -8,7 +8,7 @@ mkdir -p "$(dirname "$GAMESCOPE_MODE_SAVE_FILE")"
 touch "$GAMESCOPE_MODE_SAVE_FILE"
 
 # Mangohud config
-export MANGOHUD_CONFIGFILE=/usr/share/doc/mangohud/MangoHud.conf
+export MANGOHUD_CONFIGFILE="${HOME}/.mangohud/MangoHud.conf"
 mkdir -p "$(dirname "$MANGOHUD_CONFIGFILE")"
 echo "no_display" > "$MANGOHUD_CONFIGFILE"
 
