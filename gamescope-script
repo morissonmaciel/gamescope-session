@@ -96,7 +96,6 @@ GAMESCOPECMD="/usr/bin/gamescope \
 	$RESOLUTION \
 	$VRR_ARGS \
 	$SDR_GAMUT \
-	-U \
 	-e \
 	--max-scale 2 \
 	--xwayland-count 2 \
@@ -104,7 +103,9 @@ GAMESCOPECMD="/usr/bin/gamescope \
 	--immediate-flips \
 	--adaptive-sync \
 	-O *,eDP-1 \
+    -F fsr \
 	-f \
+	--expose-wayland \
 	--default-touch-mode 4 \
 	--hide-cursor-delay 3000 \
 	--fade-out-duration 200 \
