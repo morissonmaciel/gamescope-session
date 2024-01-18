@@ -11,7 +11,7 @@ touch "$GAMESCOPE_MODE_SAVE_FILE"
 export HOMETEST_DESKTOP=1
 export HOMETEST_USER=gamer
 export HOMETEST_DESKTOP_USER=gamer
-export HOMETEST_DESKTOP_SESSION=gnome-wayland
+export HOMETEST_DESKTOP_SESSION=gnome
 
 # Gamescope specific configuration
 export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
