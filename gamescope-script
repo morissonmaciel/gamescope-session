@@ -56,6 +56,36 @@ RESOLUTION="-W 3840 -H 2160 -w 3840 -h 2160"
 VRR_ARGS=""
 SDR_GAMUT="--sdr-gamut-wideness 1"
 
+# Setup socket for gamescope
+
+# -- Create run directory file for startup and stats sockets
+tmpdir="$([[ -n ${XDG_RUNTIME_DIR+x} ]] && mktemp -p "$XDG_RUNTIME_DIR" -d -t gamescope.XXXXXXX)"
+socket="${tmpdir:+$tmpdir/startup.socket}"
+stats="${tmpdir:+$tmpdir/stats.pipe}"
+
+# -- Fail early if we don't have a proper runtime directory setup
+if [[ -z $tmpdir || -z ${XDG_RUNTIME_DIR+x} ]]; then
+	echo >&2 "!! Failed to find run directory in which to create stats session sockets (is \$XDG_RUNTIME_DIR set?)"
+	exit 0
+fi
+
+export GAMESCOPE_STATS="$stats"
+mkfifo -- "$stats"
+mkfifo -- "$socket"
+
+# Attempt to claim global session if we're the first one running (e.g. /run/1000/gamescope)
+linkname="gamescope-stats"
+#   shellcheck disable=SC2031 # (broken warning)
+sessionlink="${XDG_RUNTIME_DIR:+$XDG_RUNTIME_DIR/}${linkname}" # Account for XDG_RUNTIME_DIR="" (notfragileatall)
+lockfile="$sessionlink".lck
+exec 9>"$lockfile" # Keep as an fd such that the lock lasts as long as the session if it is taken
+if flock -n 9 && rm -f "$sessionlink" && ln -sf "$tmpdir" "$sessionlink"; then
+	# Took the lock.  Don't blow up if those commands fail, though.
+	echo >&2 "Claimed global gamescope stats session at \"$sessionlink\""
+else
+	echo >&2 "!! Failed to claim global gamescope stats session"
+fi
+
 GAMESCOPECMD="/usr/bin/gamescope \
 	$CURSOR \
 	$RESOLUTION \
