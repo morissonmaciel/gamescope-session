@@ -56,15 +56,15 @@ RESOLUTION=""
 VRR_ARGS=""
 SDR_GAMUT="--sdr-gamut-wideness 1"
 
-GAMESCOPECMD="gamescope -e \
+GAMESCOPECMD="/usr/bin/gamescope -e \
 	$CURSOR \
 	$RESOLUTION \
 	$VRR_ARGS \
-    $SDR_GAMUT \
+	$SDR_GAMUT \
 	--max-scale 2 \
 	--xwayland-count 2 \
-    --generate-drm-mode cvt \
-    --immediate-flips \
+	--generate-drm-mode cvt \
+	--immediate-flips \
 	--adaptive-sync \
 	-O DP-1,DP-3,*,eDP-1 \
 	-f \
@@ -82,7 +82,7 @@ if command -v mangoapp > /dev/null; then
 fi
 
 # Start Steam client
-STEAMCMD="-- steam -gamepadui -steamos -steamdeck -steampal"
+STEAMCMD="steam -gamepadui -steamos -steamdeck -steampal"
 $STEAMCMD > "${HOME}"/.steam-stdout.log 2>&1
 
 # When the client exits, kill gamescope nicely
