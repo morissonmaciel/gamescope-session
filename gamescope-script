@@ -16,7 +16,7 @@ echo "no_display" > "$MANGOHUD_CONFIGFILE"
 export HOMETEST_DESKTOP=1
 export HOMETEST_USER=gamer
 export HOMETEST_DESKTOP_USER=gamer
-export HOMETEST_DESKTOP_SESSION=gnome
+export HOMETEST_DESKTOP_SESSION=gnome-wayland
 
 # Gamescope specific configuration
 export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
@@ -96,6 +96,7 @@ GAMESCOPECMD="/usr/bin/gamescope \
 	$RESOLUTION \
 	$VRR_ARGS \
 	$SDR_GAMUT \
+	-U \
 	-e \
 	--max-scale 2 \
 	--xwayland-count 2 \
