@@ -1,7 +1,21 @@
 #!/bin/bash
 
-export vk_xwayland_wait_ready=false
+# Plop GAMESCOPE_MODE_SAVE_FILE into $XDG_CONFIG_HOME (defaults to ~/.config).
+export GAMESCOPE_MODE_SAVE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/gamescope/modes.cfg"
+
+# Make path to gamescope mode save file.
+mkdir -p "$(dirname "$GAMESCOPE_MODE_SAVE_FILE")"
+touch "$GAMESCOPE_MODE_SAVE_FILE"
+
+# Steam and Desktop session configuration
+export HOMETEST_DESKTOP=1
+export HOMETEST_USER=gamer
+export HOMETEST_DESKTOP_USER=gamer
+export HOMETEST_DESKTOP_SESSION=gnome-wayland
+
+# Gamescope specific configuration
 export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
+export GAMESCOPE_LIMITER_FILE=$(mktemp /tmp/gamescope-limiter.XXXXXXXX)
 
 # MangoApp configuration
 export STEAM_USE_MANGOAPP=1
@@ -13,37 +27,63 @@ export STEAM_MANGOAPP_HORIZONTAL_SUPPORTED=1
 export STEAM_GAMESCOPE_FANCY_SCALING_SUPPORT=1
 export STEAM_GAMESCOPE_DYNAMIC_FPSLIMITER=1
 export STEAM_GAMESCOPE_HAS_TEARING_SUPPORT=1
+export STEAM_GAMESCOPE_TEARING_SUPPORTED=1
 export STEAM_GAMESCOPE_COLOR_TOYS=1
 export STEAM_GAMESCOPE_TEARING_SUPPORTED=1
+export STEAM_GAMESCOPE_NIS_SUPPORTED=1
 
-# General support
+# General configuration
 export STEAM_DISPLAY_REFRESH_LIMITS=30,40,60
 export STEAM_MULTIPLE_XWAYLANDS=1
 export XCURSOR_SIZE=1024
 export XCURSOR_THEME=steam
+export SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS=0
+export WINEDLLOVERRIDES=dxgi=n
+export QT_IM_MODULE=steam
+export GTK_IM_MODULE=Steam
 
-# RayTracing support
+# RayTracing/Vulkan configuration
 export VKVD3D_CONFIG=dxr11,dxr
 export VKVD3D_FEATURE_LEVEL=12_2
+export vk_xwayland_wait_ready=false
+
+# Cursor configuration
+CURSOR_FILE="${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow_right.png"
+CURSOR="--cursor ${CURSOR_FILE}"
 
 # Preparing gamescope session run arguments
-STEAMCMD="-- steam -gamepadui -steamos -steamdeck -steampal"
 RESOLUTION=""
 VRR_ARGS=""
 SDR_GAMUT="--sdr-gamut-wideness 1"
-CURSORCMD="--cursor-scale-height 48 --cursor ${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow.png"
 
-gamescope -e \
+GAMESCOPECMD="gamescope -e \
 	$CURSOR \
 	$RESOLUTION \
 	$VRR_ARGS \
-    --max-scale 2 \
-    --expose-wayland \
+    $SDR_GAMUT \
+	--max-scale 2 \
 	--xwayland-count 2 \
+    --generate-drm-mode cvt \
+    --immediate-flips \
 	--adaptive-sync \
-	-O *,eDP-1 \
+	-O DP-1,DP-3,*,eDP-1 \
 	-f \
 	--default-touch-mode 4 \
 	--hide-cursor-delay 3000 \
-	--fade-out-duration 200 \
-	$STEAMCMD
+	--fade-out-duration 200"
+
+# Start gamescope compositor, log it's output and background it
+$GAMESCOPECMD > "${HOME}"/.gamescope-stdout.log 2>&1 &
+gamescope_pid="$!"
+
+# If we have mangoapp binary start it
+if command -v mangoapp > /dev/null; then
+    mangoapp > "${HOME}"/.mangoapp-stdout.log 2>&1 &
+fi
+
+# Start Steam client
+STEAMCMD="-- steam -gamepadui -steamos -steamdeck -steampal"
+$STEAMCMD > "${HOME}"/.steam-stdout.log 2>&1
+
+# When the client exits, kill gamescope nicely
+kill $gamescope_pid
