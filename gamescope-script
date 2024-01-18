@@ -56,17 +56,18 @@ RESOLUTION=""
 VRR_ARGS=""
 SDR_GAMUT="--sdr-gamut-wideness 1"
 
-GAMESCOPECMD="/usr/bin/gamescope -e \
+GAMESCOPECMD="/usr/bin/gamescope \
 	$CURSOR \
 	$RESOLUTION \
 	$VRR_ARGS \
 	$SDR_GAMUT \
+	-e \
 	--max-scale 2 \
 	--xwayland-count 2 \
 	--generate-drm-mode cvt \
 	--immediate-flips \
 	--adaptive-sync \
-	-O DP-1,DP-3,*,eDP-1 \
+	-O *,eDP-1 \
 	-f \
 	--default-touch-mode 4 \
 	--hide-cursor-delay 3000 \
