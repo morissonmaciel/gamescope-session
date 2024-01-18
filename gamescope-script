@@ -52,7 +52,7 @@ CURSOR_FILE="${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow_ri
 CURSOR="--cursor ${CURSOR_FILE}"
 
 # Preparing gamescope session run arguments
-RESOLUTION=""
+RESOLUTION="-W 3840 -H 2160 -w 3840 -h 2160"
 VRR_ARGS=""
 SDR_GAMUT="--sdr-gamut-wideness 1"
 
