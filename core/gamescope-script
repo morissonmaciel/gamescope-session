@@ -21,6 +21,8 @@ export HOMETEST_DESKTOP_SESSION=gnome
 # Gamescope specific configuration
 export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
 export GAMESCOPE_LIMITER_FILE=$(mktemp /tmp/gamescope-limiter.XXXXXXXX)
+export STEAM_GAMESCOPE_VRR_SUPPORTED=1
+export STEAM_GAMESCOPE_DYNAMIC_REFRESH_IN_STEAM_SUPPORTED=0
 
 # MangoApp configuration
 export STEAM_USE_MANGOAPP=1
@@ -36,6 +38,8 @@ export STEAM_GAMESCOPE_TEARING_SUPPORTED=1
 export STEAM_GAMESCOPE_COLOR_TOYS=1
 export STEAM_GAMESCOPE_TEARING_SUPPORTED=1
 export STEAM_GAMESCOPE_NIS_SUPPORTED=1
+export STEAM_GAMESCOPE_VRR_SUPPORTED=1
+export STEAM_GAMESCOPE_DYNAMIC_REFRESH_IN_STEAM_SUPPORTED=0
 
 # General configuration
 export STEAM_DISPLAY_REFRESH_LIMITS=30,40,60
@@ -51,6 +55,11 @@ export GTK_IM_MODULE=Steam
 export VKVD3D_CONFIG=dxr11,dxr
 export VKVD3D_FEATURE_LEVEL=12_2
 export vk_xwayland_wait_ready=false
+
+# HDR configuration
+export DXVK_HDR=1
+export STEAM_GAMESCOPE_HDR_SUPPORTED=1
+export ENABLE_GAMESCOPE_WSI=1
 
 # Cursor configuration
 CURSOR_FILE="${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow_right.png"
@@ -102,8 +111,10 @@ GAMESCOPECMD="/usr/bin/gamescope \
 	--generate-drm-mode cvt \
 	--immediate-flips \
 	--adaptive-sync \
+  --hdr-enabled \
+  --hdr-itm-enable \
 	-O *,eDP-1 \
-    -F fsr \
+	-F fsr \
 	-f \
 	--expose-wayland \
 	--default-touch-mode 4 \
