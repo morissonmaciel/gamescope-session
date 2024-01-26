@@ -14,6 +14,9 @@ This script has been validated against the following criteria:
 - **Kernel:** 6.7.1-1-default
 - **Mesa:** 23.1 (also tested with Mesa 23.3.3)
 - **AMDGPU:** Navi 31
+- HDR (and HDR10) supported panels (with Proton feature-enabled games)
+- VRR (120Hz) supported panel
+- RayTracing (with Proton feature-enabled games)
 
 ## Installation
 Simply execute the following command in the terminal:
