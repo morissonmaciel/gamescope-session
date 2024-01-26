@@ -46,6 +46,8 @@ configure_lightdm() {
 }
 
 configure_xdm() {
+  XDM_CONF_FILE="/var/lib/AccountsService/users/gamer"
+
     {
         echo "[User]"
         echo "Session=gamescope-custom"
