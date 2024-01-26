@@ -66,9 +66,17 @@ CURSOR_FILE="${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow_ri
 CURSOR="--cursor ${CURSOR_FILE}"
 
 # Preparing gamescope session run arguments
-RESOLUTION="-W 3840 -H 2160 -w 3840 -h 2160"
+RESOLUTION=""
 VRR_ARGS=""
 SDR_GAMUT="--sdr-gamut-wideness 1"
+
+if [ -n "$SCREEN_WIDTH" ] && [ -n "$SCREEN_HEIGHT" ] ; then
+	RESOLUTION="-W $SCREEN_WIDTH -H $SCREEN_HEIGHT"
+fi
+
+if [ -n "$SCREEN_REFRESH_RATE" ]; then
+	VRR_ARGS="-r $SCREEN_REFRESH_RATE"
+fi
 
 # Setup socket for gamescope
 
@@ -111,8 +119,8 @@ GAMESCOPECMD="/usr/bin/gamescope \
 	--generate-drm-mode cvt \
 	--immediate-flips \
 	--adaptive-sync \
-  --hdr-enabled \
-  --hdr-itm-enable \
+	--hdr-enabled \
+	--hdr-itm-enable \
 	-O *,eDP-1 \
 	-F fsr \
 	-f \
@@ -139,7 +147,7 @@ fi
 
 # If we have mangoapp binary start it
 if command -v mangoapp > /dev/null; then
-    mangoapp > "${HOME}"/.mangoapp-stdout.log 2>&1 &
+	mangoapp > "${HOME}"/.mangoapp-stdout.log 2>&1 &
 fi
 
 # Start Steam client

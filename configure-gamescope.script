@@ -46,16 +46,12 @@ configure_lightdm() {
 }
 
 configure_xdm() {
-  XDM_CONF_FILE="/var/lib/AccountsService/users/gamer"
-
-  if [ -f "$XDM_CONF_FILE" ]; then
-      {
-          echo "[User]"
-          echo "Session=gamescope-custom"
-          echo "Icon=/home/gamer/.face"
-          echo "SystemAccount=false"
-      } | sudo tee "$XDM_CONF_FILE"
-  fi
+    {
+        echo "[User]"
+        echo "Session=gamescope-custom"
+        echo "Icon=/home/gamer/.face"
+        echo "SystemAccount=false"
+    } | sudo tee "$XDM_CONF_FILE"
 }
 
 # Downloading necessary packages for Steam gamemode with gamescope
