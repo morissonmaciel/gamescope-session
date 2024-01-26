@@ -10,13 +10,13 @@ This repository includes a configuration script to enable the gamescope-custom s
 - All set!
 
 ## Validation
-This script has been validated against the following criteria:
+This script was validated with following configuration:
 - **Kernel:** 6.7.1-1-default
 - **Mesa:** 23.1 (also tested with Mesa 23.3.3)
 - **AMDGPU:** Navi 31
-- HDR (and HDR10) supported panels (with Proton feature-enabled games)
-- VRR (120Hz) supported panel
-- RayTracing (with Proton feature-enabled games)
+- **HDR (and HDR10):** OK (with Proton feature-enabled games)
+- **VRR:** OK (120Hz) supported panel
+- **RayTracing:** OK (with Proton feature-enabled games)
 
 ## Installation
 Simply execute the following command in the terminal:
