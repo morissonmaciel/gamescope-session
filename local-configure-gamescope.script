@@ -43,9 +43,13 @@ copy_local "rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode"
 
 copy_local "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
 copy_local "rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop"
+copy_local "rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
 copy_local "rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop"
 
 copy_local "rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script"
+
+# Rebuilding application database
+update-desktop-database ~/.local/share/applications
 
 # Configuring Lightdm as the login manager, if set
 # if [[ "$1" == "--lightdm" ]]; then
