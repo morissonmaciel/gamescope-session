@@ -2,6 +2,7 @@
 
 GAMESCOPE_SCRIPT_FILE="/usr/share/gamescope-custom/gamescope-script"
 DESKTOP_FILE="/usr/share/wayland-sessions/gamescope-custom.desktop"
+EXPORT_GPU="/usr/bin/export-gpu"
 
 # Define the root absolute URL
 ROOT_URL="https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main"
@@ -62,6 +63,9 @@ sudo zypper -n in steam steam-devices gamescope mangoapp
 # Downloading remote contents for gamescope custom session creation
 download_and_install "$ROOT_URL/core/gamescope-script" "$GAMESCOPE_SCRIPT_FILE"
 download_and_install "$ROOT_URL/core/gamescope-custom.desktop" "$DESKTOP_FILE"
+download_and_install "$ROOT_URL/setup/export-gpu" "$EXPORT_GPU"
+
+sh "$EXPORT_GPU"
 
 # Configuring Lightdm as the login manager, if set
 if [[ "$1" == "--lightdm" ]]; then
