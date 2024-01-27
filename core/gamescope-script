@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Fix intel color corruption
+export INTEL_DEBUG=norbc
+# Enabling full multi threading support for games with Mesa
 export mesa_glthread=true
 
 # Plop GAMESCOPE_MODE_SAVE_FILE into $XDG_CONFIG_HOME (defaults to ~/.config).
@@ -21,10 +24,9 @@ export HOMETEST_DESKTOP_USER=gamer
 export HOMETEST_DESKTOP_SESSION=gnome
 
 # Gamescope specific configuration
+export GAMESCOPE_NV12_COLORSPACE=k_EStreamColorspace_BT601
 export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
 export GAMESCOPE_LIMITER_FILE=$(mktemp /tmp/gamescope-limiter.XXXXXXXX)
-export STEAM_GAMESCOPE_VRR_SUPPORTED=1
-export STEAM_GAMESCOPE_DYNAMIC_REFRESH_IN_STEAM_SUPPORTED=0
 
 # MangoApp configuration
 export STEAM_USE_MANGOAPP=1
@@ -38,7 +40,6 @@ export STEAM_GAMESCOPE_DYNAMIC_FPSLIMITER=1
 export STEAM_GAMESCOPE_HAS_TEARING_SUPPORT=1
 export STEAM_GAMESCOPE_TEARING_SUPPORTED=1
 export STEAM_GAMESCOPE_COLOR_TOYS=1
-export STEAM_GAMESCOPE_TEARING_SUPPORTED=1
 export STEAM_GAMESCOPE_NIS_SUPPORTED=1
 export STEAM_GAMESCOPE_VRR_SUPPORTED=1
 export STEAM_GAMESCOPE_DYNAMIC_REFRESH_IN_STEAM_SUPPORTED=0
@@ -62,6 +63,14 @@ export vk_xwayland_wait_ready=false
 export DXVK_HDR=1
 export STEAM_GAMESCOPE_HDR_SUPPORTED=1
 export ENABLE_GAMESCOPE_WSI=1
+
+# Steam OS Sentinels ----------------------------------------------------
+# Workaround for steam getting killed immediatly during reboot
+export STEAMOS_STEAM_REBOOT_SENTINEL="/tmp/steamos-reboot-sentinel"
+
+# Workaround for steam getting killed immediatly during shutdown
+# Same idea as reboot sentinel above
+export STEAMOS_STEAM_SHUTDOWN_SENTINEL="/tmp/steamos-shutdown-sentinel"
 
 # Cursor configuration
 CURSOR_FILE="${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow_right.png"
@@ -109,6 +118,14 @@ if flock -n 9 && rm -f "$sessionlink" && ln -sf "$tmpdir" "$sessionlink"; then
 else
 	echo >&2 "!! Failed to claim global gamescope stats session"
 fi
+
+# Source user configuration from ~/.config/environment.d
+set -a
+for i in "${HOME}"/.config/environment.d/*.conf ;
+do
+    [[ -f "${i}" ]] && . "${i}"
+done
+set +a
 
 GAMESCOPECMD="/usr/bin/gamescope \
 	$CURSOR \
@@ -158,3 +175,40 @@ $STEAMCMD > "${HOME}"/.steam-stdout.log 2>&1
 
 # When the client exits, kill gamescope nicely
 kill $gamescope_pid
+
+# Start a background sleep for five seconds because we don't trust it
+sleep 5 &
+sleep_pid="$!"
+
+# Catch reboot and poweroof sentinels here
+if [[ -e "$STEAMOS_STEAM_REBOOT_SENTINEL" ]]; then
+	rm -f "$STEAMOS_STEAM_REBOOT_SENTINEL"
+	reboot
+fi
+if [[ -e "$STEAMOS_STEAM_SHUTDOWN_SENTINEL" ]]; then
+	rm -f "$STEAMOS_STEAM_SHUTDOWN_SENTINEL"
+	poweroff
+fi
+
+# Wait for gamescope or the sleep to finish for timeout purposes
+ret=0
+wait -n $gamescope_pid $sleep_pid || ret=$?
+
+# If we get a SIGTERM/etc while waiting this happens.  Proceed to kill -9 everything but complain
+if [[ $ret = 127 ]]; then
+	echo >&2 "gamescope-session: Interrupted while waiting on teardown, force-killing remaining tasks"
+fi
+
+# Kill all remaining jobs and warn if unexpected things are in there (should be just sleep_pid, unless gamescope failed
+# to exit in time or we hit the interrupt case above)
+for job in $(jobs -p); do
+	# Warn about unexpected things
+	if [[ $ret != 127 && $job = "$gamescope_pid" ]]; then
+		echo >&2 "gamescope-session: gamescope timed out while exiting, killing"
+	elif [[ $ret != 127 && $job != "$sleep_pid" ]]; then
+		echo >&2 "gamescope-session: unexpected background pid $job at teardown: "
+		# spew some debug about it
+		ps -p "$job" >&2
+	fi
+	kill -9 "$job"
+done
