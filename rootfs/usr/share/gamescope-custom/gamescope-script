@@ -154,6 +154,11 @@ GAMESCOPECMD="/usr/bin/gamescope \
 	--fade-out-duration 200 \
 	-R $socket -T $stats"
 
+# Cicle logs before startup
+rm -rf "${HOME}/.gamescope-stdout.log"
+rm -rf "${HOME}/.mangoapp-stdout.log"
+rm -rf "${HOME}/.steam-stdout.log"
+
 # Start gamescope compositor, log it's output and background it
 $GAMESCOPECMD > "${HOME}"/.gamescope-stdout.log 2>&1 &
 gamescope_pid="$!"
