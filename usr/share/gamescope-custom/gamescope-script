@@ -119,6 +119,8 @@ else
 	echo >&2 "!! Failed to claim global gamescope stats session"
 fi
 
+ulimit -n 524288
+
 # Source user configuration from ~/.config/environment.d
 set -a
 for i in "${HOME}"/.config/environment.d/*.conf ;
