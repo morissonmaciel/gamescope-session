@@ -63,13 +63,13 @@ case "$session" in
     session_launcher="gnome-wayland.desktop"
   ;;
   plasma-x11-persistent)
-    session_launcher="gnome-xorg.desktop"
+    session_launcher="gnome.desktop"
   ;;
   desktop|plasma)
     if ${DESKTOP_WAYLAND}; then
       session_launcher="gnome-wayland-oneshot.desktop"
     else
-      session_launcher="gnome-xorg-oneshot.desktop"
+      session_launcher="gnome-oneshot.desktop"
     fi
     create_sentinel=1
   ;;

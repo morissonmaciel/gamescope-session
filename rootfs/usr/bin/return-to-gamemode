@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+
+USER=$(id -nu 1000)
+HOME=$(getent passwd $USER | cut -d: -f6)
+
+# SteamOS autologin SDDM config
+AUTOLOGIN_CONF="/var/lib/AccountsService/users/gamer"
+
+# Configure autologin if Steam has been updated
+if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
+  {
+    echo "[User]"
+    echo "Session=gamescope-custom.desktop"
+    echo "Icon=/home/gamer/.face"
+    echo "SystemAccount=false"
+  } > "$AUTOLOGIN_CONF"
+fi
+
+sudo -Eu $USER gnome-session-quit --logout --no-prompt

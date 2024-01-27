@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e 
+set -e
 
 create_backup() {
     FILE="$1"
@@ -8,8 +8,21 @@ create_backup() {
 
     if [ "$BACKUP" = true ] && [ -f "$FILE" ]; then
         BACKUP_FILE="${FILE}.old"
-        sudo cp "$FILE" "$BACKUP_FILE"
+        sudo rm -rf "$BACKUP_FILE"
+        #sudo cp "$FILE" "$BACKUP_FILE"
     fi
+}
+
+copy_local() {
+  SRC_FILE="$1"
+  DEST_FILE="$2"
+
+  if [ -f "$DEST_FILE" ]; then
+    create_backup "$DEST_FILE"
+  fi
+
+  sudo mkdir -p "$(dirname "$DEST_FILE")"
+  cat "$SRC_FILE" | sudo tee "$DEST_FILE"
 }
 
 configure_xdm() {
@@ -23,21 +36,22 @@ configure_xdm() {
   } | sudo tee "$XDM_CONF_FILE"
 }
 
-LOCAL_GAMESCOPE="core/gamescope-script"
-TARGET_GAMESCOPE="/usr/share/gamescope-custom/gamescope-script"
+# Copying local files
+copy_local "rootfs/usr/bin/gnome-session-select" "/usr/bin/gnome-session-select"
+copy_local "rootfs/usr/bin/steamos-session-select" "/usr/bin/steamos-session-select"
+copy_local "rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode"
 
-if [ -f "$LOCAL_GAMESCOPE" ]; then
-  create_backup "$TARGET_GAMESCOPE"
-fi
+copy_local "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
+copy_local "rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop"
+copy_local "rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop"
 
-sudo mkdir -p "$(dirname "$TARGET_GAMESCOPE")"
-cat $LOCAL_GAMESCOPE > sudo tee "$TARGET_GAMESCOPE"
+copy_local "rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script"
 
 # Configuring Lightdm as the login manager, if set
-if [[ "$1" == "--lightdm" ]]; then
-  configure_lightdm
-else
-  configure_xdm
-fi
-
-sudo reboot -f
+# if [[ "$1" == "--lightdm" ]]; then
+#   configure_lightdm
+# else
+#   configure_xdm
+# fi
+#
+# sudo reboot -f
