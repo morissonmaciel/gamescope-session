@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e 
+
+create_backup() {
+    FILE="$1"
+    BACKUP="${2:-true}"  # Default value is true if not provided
+
+    if [ "$BACKUP" = true ] && [ -f "$FILE" ]; then
+        BACKUP_FILE="${FILE}.old"
+        sudo cp "$FILE" "$BACKUP_FILE"
+    fi
+}
+
+configure_xdm() {
+  XDM_CONF_FILE="/var/lib/AccountsService/users/gamer"
+
+  {
+    echo "[User]"
+    echo "Session=gamescope-custom"
+    echo "Icon=/home/gamer/.face"
+    echo "SystemAccount=false"
+  } | sudo tee "$XDM_CONF_FILE"
+}

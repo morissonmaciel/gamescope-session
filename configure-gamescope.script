@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e 
+
 GAMESCOPE_SCRIPT_FILE="/usr/share/gamescope-custom/gamescope-script"
 DESKTOP_FILE="/usr/share/wayland-sessions/gamescope-custom.desktop"
 EXPORT_GPU="/usr/bin/export-gpu"
