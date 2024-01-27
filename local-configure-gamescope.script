@@ -16,6 +16,7 @@ create_backup() {
 copy_local() {
   SRC_FILE="$1"
   DEST_FILE="$2"
+  EXECUTABLE="${2:-false}"
 
   if [ -f "$DEST_FILE" ]; then
     create_backup "$DEST_FILE"
@@ -23,6 +24,10 @@ copy_local() {
 
   sudo mkdir -p "$(dirname "$DEST_FILE")"
   cat "$SRC_FILE" | sudo tee "$DEST_FILE"
+
+  if [ "$EXECUTABLE" = "true" ]; then
+    sudo chmod +x "$DEST_FILE"
+  fi
 }
 
 configure_xdm() {
@@ -37,25 +42,26 @@ configure_xdm() {
 }
 
 # Copying local files
-copy_local "rootfs/usr/bin/gnome-session-select" "/usr/bin/gnome-session-select"
-copy_local "rootfs/usr/bin/steamos-session-select" "/usr/bin/steamos-session-select"
-copy_local "rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode"
+copy_local "rootfs/usr/bin/gnome-session-select" "/usr/bin/gnome-session-select" true
+copy_local "rootfs/usr/bin/steamos-session-select" "/usr/bin/steamos-session-select" true
+copy_local "rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" true
 
-copy_local "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
-copy_local "rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop"
-copy_local "rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
-copy_local "rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop"
+copy_local "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" true
+copy_local "rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop" true
+copy_local "rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop" true
+copy_local "rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop" true
 
-copy_local "rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script"
+copy_local "rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" true
 
 # Rebuilding application database
+# copy_local "/usr/share/applications/return-to-gamemode.desktop" "$HOME/.local/share/applications/return-to-gamemode.desktop" true
 update-desktop-database ~/.local/share/applications
 
 # Configuring Lightdm as the login manager, if set
-# if [[ "$1" == "--lightdm" ]]; then
-#   configure_lightdm
-# else
-#   configure_xdm
-# fi
-#
+if [[ "$1" == "--lightdm" ]]; then
+  configure_lightdm
+else
+  configure_xdm
+fi
+
 # sudo reboot -f
