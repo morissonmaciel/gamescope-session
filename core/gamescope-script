@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Fix intel color corruption
+export INTEL_DEBUG=norbc
+# Enabling full multi threading support for games with Mesa
+export mesa_glthread=true
+
 # Plop GAMESCOPE_MODE_SAVE_FILE into $XDG_CONFIG_HOME (defaults to ~/.config).
 export GAMESCOPE_MODE_SAVE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/gamescope/modes.cfg"
 
