@@ -1,8 +1,5 @@
 #!/bin/bash
 
-GAMESCOPE_SCRIPT_FILE="/usr/share/gamescope-custom/gamescope-script"
-DESKTOP_FILE="/usr/share/wayland-sessions/gamescope-custom.desktop"
-
 # Define the root absolute URL
 ROOT_URL="https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main"
 
@@ -48,20 +45,28 @@ configure_lightdm() {
 configure_xdm() {
   XDM_CONF_FILE="/var/lib/AccountsService/users/gamer"
 
-    {
-        echo "[User]"
-        echo "Session=gamescope-custom"
-        echo "Icon=/home/gamer/.face"
-        echo "SystemAccount=false"
-    } | sudo tee "$XDM_CONF_FILE"
+  {
+    echo "[User]"
+    echo "Session=gamescope-custom"
+    echo "Icon=/home/gamer/.face"
+    echo "SystemAccount=false"
+  } | sudo tee "$XDM_CONF_FILE"
 }
+
+
+GAMESCOPE_SCRIPT_FILE="/usr/share/gamescope-custom/gamescope-script"
+DESKTOP_FILE="/usr/share/wayland-sessions/gamescope-custom.desktop"
+EXPORT_GPU="/usr/bin/export-gpu"
 
 # Downloading necessary packages for Steam gamemode with gamescope
 sudo zypper -n in steam steam-devices gamescope mangoapp
 
 # Downloading remote contents for gamescope custom session creation
-download_and_install "$ROOT_URL/core/gamescope-script" "$GAMESCOPE_SCRIPT_FILE"
-download_and_install "$ROOT_URL/core/gamescope-custom.desktop" "$DESKTOP_FILE"
+download_and_install "$ROOT_URL$GAMESCOPE_SCRIPT_FILE" "$GAMESCOPE_SCRIPT_FILE"
+download_and_install "$ROOT_URL$GAMESCOPE_SCRIPT_FILE" "$DESKTOP_FILE"
+download_and_install "$ROOT_URL$EXPORT_GPU" "$EXPORT_GPU"
+
+sudo sh "$EXPORT_GPU"
 
 # Configuring Lightdm as the login manager, if set
 if [[ "$1" == "--lightdm" ]]; then
@@ -70,4 +75,13 @@ else
   configure_xdm
 fi
 
+# Pre starting steam to prevent reboot in gamescope custom session black screen or fall to desktop
+steam
+steam_pid="$!"
+
+read -p "Wait for steam complete its initialization and then exit. No need to login. Press any key to continue"
+kill -9 "$steam_pid"
+wait
+
+# Final reboot
 sudo reboot -f
