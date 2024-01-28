@@ -83,7 +83,7 @@ CURSOR="--cursor ${CURSOR_FILE}"
 # Preparing gamescope session run arguments
 RESOLUTION=""
 VRR_ARGS=""
-SDR_GAMUT="--sdr-gamut-wideness 1 --hdr-wide-gammut-for-sdr --hdr-itm-sdr-nits 200 --hdr-sdr-content-nits 500 --hdr-itm-target-nits 800"
+SDR_GAMUT="--sdr-gamut-wideness 1 --hdr-itm-sdr-nits 200 --hdr-sdr-content-nits 500 --hdr-itm-target-nits 800"
 
 if [ -n "$SCREEN_WIDTH" ] && [ -n "$SCREEN_HEIGHT" ] ; then
 	RESOLUTION="-W $SCREEN_WIDTH -H $SCREEN_HEIGHT"
