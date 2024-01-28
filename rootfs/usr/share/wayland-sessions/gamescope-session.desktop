@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Gamescope Custom
+Comment=Gamescope Custom
+Exec=/usr/bin/steamos-session-select
+Type=Application
+DesktopNames=gamescope

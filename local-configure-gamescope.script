@@ -35,7 +35,7 @@ configure_xdm() {
 
   {
     echo "[User]"
-    echo "Session=gamescope-custom"
+    echo "Session=gamescope-session"
     echo "Icon=/home/gamer/.face"
     echo "SystemAccount=false"
   } | sudo tee "$XDM_CONF_FILE"
@@ -49,12 +49,13 @@ copy_local "rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" tru
 copy_local "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" true
 copy_local "rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop" true
 copy_local "rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop" true
+copy_local "rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/share/wayland-sessions/gamescope-session.desktop" true
 copy_local "rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop" true
 
 copy_local "rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" true
 
 # Rebuilding application database
-# copy_local "/usr/share/applications/return-to-gamemode.desktop" "$HOME/.local/share/applications/return-to-gamemode.desktop" true
+copy_local "/usr/share/applications/return-to-gamemode.desktop" "$HOME/.local/share/applications/Return to Gamemode.desktop" true
 update-desktop-database ~/.local/share/applications
 
 # Configuring Lightdm as the login manager, if set
@@ -64,4 +65,4 @@ else
   configure_xdm
 fi
 
-# sudo reboot -f
+sudo reboot -f
