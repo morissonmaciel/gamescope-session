@@ -19,6 +19,7 @@ download_and_install() {
     URL="$1"
     FILE="$2"
     BACKUP="${3:-true}"  # Default value is true if not provided
+    EXECUTABLE="${4:-false}"
 
     CONTENTS="$(wget -qO- "$URL")"
     echo "$URL"
@@ -29,7 +30,9 @@ download_and_install() {
         sudo mkdir -p "$(dirname "$FILE")"
         echo "${CONTENTS}" | sudo tee "$FILE"
 
+      if [ "$EXECUTABLE" = "true" ]; then
         sudo chmod +x "$FILE"
+      fi
     fi
 }
 
@@ -73,13 +76,13 @@ sudo rm -rf "/usr/share/wayland-sessions/gamescope-custom.desktop"
 sudo rm -rf "$HOME/.local/share/applications/Return to Gamemode.desktop"
 
 # Downloading remote contents for gamescope custom session creation
-copy_local "$ROOT_URL/rootfs/usr/bin/export-gpu" "/usr/bin/export-gpu" true
-copy_local "$ROOT_URL/rootfs/lib/systemd/user/gamescope-session@.service" "/lib/systemd/user/gamescope-session@.service" true
-copy_local "$ROOT_URL/rootfs/usr/bin/gamescope-custom-session" "/usr/bin/gamescope-custom-session" true
-copy_local "$ROOT_URL/rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" true
-copy_local "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/share/wayland-sessions/gamescope-session.desktop"
-copy_local "$ROOT_URL/rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
-copy_local "$ROOT_URL/rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" true
+download_and_install "$ROOT_URL/rootfs/usr/bin/export-gpu" "/usr/bin/export-gpu" true true
+download_and_install "$ROOT_URL/rootfs/lib/systemd/user/gamescope-session@.service" "/lib/systemd/user/gamescope-session@.service" true true
+download_and_install "$ROOT_URL/rootfs/usr/bin/gamescope-custom-session" "/usr/bin/gamescope-custom-session" true true
+download_and_install "$ROOT_URL/rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" true true
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/share/wayland-sessions/gamescope-session.desktop"
+download_and_install "$ROOT_URL/rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
+download_and_install "$ROOT_URL/rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" true true
 
 # Rebuilding application database
 sudo update-desktop-database
