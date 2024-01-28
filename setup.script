@@ -35,6 +35,23 @@ download_and_install() {
     fi
 }
 
+copy_local() {
+  SRC_FILE="$1"
+  DEST_FILE="$2"
+  EXECUTABLE="${2:-false}"
+
+  if [ -f "$DEST_FILE" ]; then
+    create_backup "$DEST_FILE"
+  fi
+
+  sudo mkdir -p "$(dirname "$DEST_FILE")"
+  cat "$SRC_FILE" | sudo tee "$DEST_FILE"
+
+  if [ "$EXECUTABLE" = "true" ]; then
+    sudo chmod +x "$DEST_FILE"
+  fi
+}
+
 configure_lightdm() {
   # Additional setup for lightdm
   sudo zypper -n in lightdm
