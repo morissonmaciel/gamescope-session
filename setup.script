@@ -19,7 +19,7 @@ download_and_install() {
     URL="$1"
     FILE="$2"
     BACKUP="${3:-true}"  # Default value is true if not provided
-    EXECUTABLE="${3:-false}"
+    EXECUTABLE="${4:-false}"
 
     CONTENTS="$(wget -qO- "$URL")"
 
