@@ -100,6 +100,6 @@ fi
 } > "$CONF_FILE"
 
 echo "Updated system autologin session to $session_launcher"
-systemctl reset-failed display-manager
-systemctl restart display-manager
+systemctl reset-failed xdm
+systemctl restart xdm
 echo "Restarted XDM"

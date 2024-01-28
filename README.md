@@ -22,7 +22,7 @@ This script was validated with following configuration:
 Simply execute the following command in the terminal:
 
 ```bash
-sh -c "$(wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/configure-gamescope.script)"
+sh -c "$(wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/setup.script)"
 ```
 
 ## Known Issues
@@ -39,4 +39,4 @@ You can change it in `/usr/share/gamescope-custom/gamescope-script` file setting
 ## References
 - Gamescope [Valve Gamescope](https://github.com/ValveSoftware/gamescope)
 - [@DoomedSouls] [Gamescope embedded script](https://gist.github.com/DoomedSouls/e4015dffc08963a57c6adf3066f5a486)
-- [@ChimeraOS] [ChimeraOS Gamescope Session]()https://github.com/ChimeraOS/gamescope-session
+- [@ChimeraOS] [ChimeraOS Gamescope Session](https://github.com/ChimeraOS/gamescope-session)

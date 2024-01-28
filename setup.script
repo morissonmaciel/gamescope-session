@@ -2,32 +2,50 @@
 
 set -e
 
+# Define the root absolute URL
+ROOT_URL="https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main"
+
 create_backup() {
     FILE="$1"
     BACKUP="${2:-true}"  # Default value is true if not provided
 
     if [ "$BACKUP" = true ] && [ -f "$FILE" ]; then
         BACKUP_FILE="${FILE}.old"
-        sudo rm -rf "$BACKUP_FILE"
-        #sudo cp "$FILE" "$BACKUP_FILE"
+        sudo cp "$FILE" "$BACKUP_FILE"
     fi
 }
 
-copy_local() {
-  SRC_FILE="$1"
-  DEST_FILE="$2"
-  EXECUTABLE="${2:-false}"
+download_and_install() {
+    URL="$1"
+    FILE="$2"
+    BACKUP="${3:-true}"  # Default value is true if not provided
+    EXECUTABLE="${3:-false}"
 
-  if [ -f "$DEST_FILE" ]; then
-    create_backup "$DEST_FILE"
-  fi
+    CONTENTS="$(wget -qO- "$URL")"
 
-  sudo mkdir -p "$(dirname "$DEST_FILE")"
-  cat "$SRC_FILE" | sudo tee "$DEST_FILE"
+    if [ ! -z "$CONTENTS" ]; then
+        create_backup "$FILE" "$BACKUP"
 
-  if [ "$EXECUTABLE" = "true" ]; then
-    sudo chmod +x "$DEST_FILE"
-  fi
+        sudo mkdir -p "$(dirname "$FILE")"
+        echo "${CONTENTS}" | sudo tee "$FILE"
+
+        if [ "$EXECUTABLE" = "true" ]; then
+          sudo chmod +x "$FILE"
+        fi
+    fi
+}
+
+configure_lightdm() {
+  # Additional setup for lightdm
+  sudo zypper -n in lightdm
+  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/lightdm
+
+  # Download/install lightdm configuration
+  LIGHTDM_FILE="/usr/share/lightdm/lightdm.conf.d/50-suse-defaults.conf"
+  SYSCONF_FILE="/etc/sysconfig/displaymanager"
+
+  download_and_install "$ROOT_URL/lightdm/50-suse-defaults.conf" "$LIGHTDM_FILE"
+  download_and_install "$ROOT_URL/lightdm/displaymanager" "$SYSCONF_FILE"
 }
 
 configure_xdm() {
@@ -41,21 +59,24 @@ configure_xdm() {
   } | sudo tee "$XDM_CONF_FILE"
 }
 
-# Copying local files
-copy_local "rootfs/usr/bin/gnome-session-select" "/usr/bin/gnome-session-select" "true"
-copy_local "rootfs/usr/bin/steamos-session-select" "/usr/bin/steamos-session-select" "true"
-copy_local "rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" "true"
+# Downloading necessary packages for Steam gamemode with gamescope
+sudo zypper -n in steam steam-devices gamescope mangoapp
 
-copy_local "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
-copy_local "rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop"
-copy_local "rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop"
-copy_local "rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/share/wayland-sessions/gamescope-session.desktop"
-copy_local "rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
+# Downloading remote contents for gamescope custom session creation
+download_and_install "$ROOT_URL/rootfs/usr/bin/gnome-session-select" "/usr/bin/gnome-session-select" "false" "true"
+download_and_install "$ROOT_URL/rootfs/usr/bin/steamos-session-select" "/usr/bin/steamos-session-select" "false" "true"
+download_and_install "$ROOT_URL/rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" "true" "false"
 
-copy_local "rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" "true"
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "false"
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop" "false"
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop" "false"
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/share/wayland-sessions/gamescope-session.desktop" "false"
+download_and_install "$ROOT_URL/rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop" "false"
+
+download_and_install "$ROOT_URL/rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" "false" "true"
 
 # Rebuilding application database
-# copy_local "/usr/share/applications/return-to-gamemode.desktop" "$HOME/.local/share/applications/Return to Gamemode.desktop"
+copy_local "/usr/share/applications/return-to-gamemode.desktop" "$HOME/.local/share/applications/Return to Gamemode.desktop"
 sudo update-desktop-database
 
 # Configuring Lightdm as the login manager, if set
