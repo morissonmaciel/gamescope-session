@@ -58,6 +58,9 @@ copy_local "rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/s
 copy_local "rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
 copy_local "rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" true
 
+copy_local "rootfs/home/local/share/steamos/cursors/steamos-cursor-config" "$HOME/.local/share/steamos/cursors/steamos-cursor-config"
+copy_local "rootfs/home/local/share/steamos/cursors/steamos-cursor.png" "$HOME/.local/share/steamos/cursors/steamos-cursor.png"
+
 # Rebuilding application database
 sudo update-desktop-database
 

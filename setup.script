@@ -84,6 +84,9 @@ download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-sess
 download_and_install "$ROOT_URL/rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
 download_and_install "$ROOT_URL/rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" true true
 
+download_and_install "$ROOT_URL/rootfs/home/local/share/steamos/cursors/steamos-cursor-config" "$HOME/.local/share/steamos/cursors/steamos-cursor-config"
+download_and_install "$ROOT_URL/rootfs/home/local/share/steamos/cursors/steamos-cursor.png" "$HOME/.local/share/steamos/cursors/steamos-cursor.png"
+
 # Rebuilding application database
 sudo update-desktop-database
 
