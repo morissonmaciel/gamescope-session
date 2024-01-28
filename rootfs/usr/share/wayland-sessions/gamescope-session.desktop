@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Gamescope Custom
-Comment=Gamescope Custom
-Exec=/usr/bin/steamos-session-select
+Name=Steam Gamemode
+Comment=Steam Gamemode session
+Exec=/usr/bin/gamescope-custom-session
 Type=Application
 DesktopNames=gamescope

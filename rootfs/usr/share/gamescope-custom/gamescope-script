@@ -4,8 +4,6 @@
 export INTEL_DEBUG=norbc
 # Enabling full multi threading support for games with Mesa
 export mesa_glthread=true
-# Window managers sets this to wayland but apps using Gamescope must use x11
-export XDG_SESSION_TYPE=x11
 
 # Plop GAMESCOPE_MODE_SAVE_FILE into $XDG_CONFIG_HOME (defaults to ~/.config).
 export GAMESCOPE_MODE_SAVE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/gamescope/modes.cfg"
@@ -67,7 +65,8 @@ export vk_xwayland_wait_ready=false
 # HDR configuration
 export DXVK_HDR=1
 export STEAM_GAMESCOPE_HDR_SUPPORTED=1
-export ENABLE_GAMESCOPE_WSI=1
+# export ENABLE_GAMESCOPE_WSI=1
+export PROTON_ENABLE_AMD_AGS=1
 
 # Steam OS Sentinels ----------------------------------------------------
 # Workaround for steam getting killed immediatly during reboot
@@ -153,8 +152,14 @@ GAMESCOPECMD="/usr/bin/gamescope \
 	--expose-wayland \
 	--default-touch-mode 4 \
 	--hide-cursor-delay 3000 \
-	--fade-out-duration 200 \
-	-R $socket -T $stats"
+	--fade-out-duration 200"
+
+# Add socket and stats read
+if [ -z $VULKAN_ADAPTER ]; then
+		GAMESCOPECMD+=" -R $socket -T $stats"
+else
+		GAMESCOPECMD+=" --prefer-vk-device $VULKAN_ADAPTER -R $socket -T $stats"
+fi
 
 # Cicle logs before startup
 rm -rf "${HOME}/.gamescope-stdout.log"
@@ -176,9 +181,16 @@ else
 	# Systemd or Session manager will have to restart session
 fi
 
+# Input method support if present
+if command -v /usr/bin/ibus-daemon > /dev/null; then
+    /usr/bin/ibus-daemon -d -r --panel=disable --emoji-extension=disable
+fi
+
 # If we have mangoapp binary start it
 if command -v mangoapp > /dev/null; then
-	mangoapp > "${HOME}"/.mangoapp-stdout.log 2>&1 &
+	(while true; do
+		mangoapp > "${HOME}"/.mangoapp-stdout.log 2>&1
+	done) &
 fi
 
 # Start Steam client
