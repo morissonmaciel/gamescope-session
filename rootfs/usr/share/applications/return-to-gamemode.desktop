@@ -6,3 +6,4 @@ TryExec=/usr/bin/return-to-gamemode
 Type=Application
 DesktopNames=Gamemode
 Icon=steam
+Categories=Game;

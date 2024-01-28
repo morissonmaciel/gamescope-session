@@ -10,7 +10,7 @@ AUTOLOGIN_CONF="/var/lib/AccountsService/users/gamer"
 if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
   {
     echo "[User]"
-    echo "Session=gamescope-session.desktop"
+    echo "Session=gamescope-custom.desktop"
     echo "Icon=/home/gamer/.face"
     echo "SystemAccount=false"
   } > "$AUTOLOGIN_CONF"
