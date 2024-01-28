@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set -e
+#set -e
 
 # Define the root absolute URL
 ROOT_URL="https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main"
@@ -19,9 +19,9 @@ download_and_install() {
     URL="$1"
     FILE="$2"
     BACKUP="${3:-true}"  # Default value is true if not provided
-    EXECUTABLE="${4:-false}"
 
     CONTENTS="$(wget -qO- "$URL")"
+    echo "$URL"
 
     if [ ! -z "$CONTENTS" ]; then
         create_backup "$FILE" "$BACKUP"
@@ -29,9 +29,7 @@ download_and_install() {
         sudo mkdir -p "$(dirname "$FILE")"
         echo "${CONTENTS}" | sudo tee "$FILE"
 
-        if [ "$EXECUTABLE" = "true" ]; then
-          sudo chmod +x "$FILE"
-        fi
+        sudo chmod +x "$FILE"
     fi
 }
 
@@ -80,17 +78,17 @@ configure_xdm() {
 sudo zypper -n in steam steam-devices gamescope mangoapp
 
 # Downloading remote contents for gamescope custom session creation
-download_and_install "$ROOT_URL/rootfs/usr/bin/gnome-session-select" "/usr/bin/gnome-session-select" "false" "true"
-download_and_install "$ROOT_URL/rootfs/usr/bin/steamos-session-select" "/usr/bin/steamos-session-select" "false" "true"
-download_and_install "$ROOT_URL/rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" "true" "false"
+download_and_install "$ROOT_URL/rootfs/usr/bin/gnome-session-select" "/usr/bin/gnome-session-select"
+download_and_install "$ROOT_URL/rootfs/usr/bin/steamos-session-select" "/usr/bin/steamos-session-select"
+download_and_install "$ROOT_URL/rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" "true"
 
-download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "false"
-download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop" "false"
-download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop" "false"
-download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/share/wayland-sessions/gamescope-session.desktop" "false"
-download_and_install "$ROOT_URL/rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop" "false"
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop" "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gnome-oneshot.desktop" "/usr/share/wayland-sessions/gnome-oneshot.desktop"
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-custom.desktop" "/usr/share/wayland-sessions/gamescope-custom.desktop"
+download_and_install "$ROOT_URL/rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/share/wayland-sessions/gamescope-session.desktop"
+download_and_install "$ROOT_URL/rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
 
-download_and_install "$ROOT_URL/rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" "false" "true"
+download_and_install "$ROOT_URL/rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script"
 
 # Rebuilding application database
 copy_local "/usr/share/applications/return-to-gamemode.desktop" "$HOME/.local/share/applications/Return to Gamemode.desktop"
