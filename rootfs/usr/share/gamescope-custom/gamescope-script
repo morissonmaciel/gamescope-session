@@ -77,7 +77,7 @@ export STEAMOS_STEAM_REBOOT_SENTINEL="/tmp/steamos-reboot-sentinel"
 export STEAMOS_STEAM_SHUTDOWN_SENTINEL="/tmp/steamos-shutdown-sentinel"
 
 # Cursor configuration
-CURSOR_FILE="${HOME}/.local/share/Steam/tenfoot/resource/images/cursors/arrow_right.png"
+CURSOR_FILE="${HOME}/.local/share/steamos/cursors/arrow_right.png"
 CURSOR="--cursor ${CURSOR_FILE}"
 
 # Preparing gamescope session run arguments
