@@ -65,7 +65,7 @@ export vk_xwayland_wait_ready=false
 # HDR configuration
 export DXVK_HDR=1
 export STEAM_GAMESCOPE_HDR_SUPPORTED=1
-# export ENABLE_GAMESCOPE_WSI=1
+export ENABLE_GAMESCOPE_WSI=1
 export PROTON_ENABLE_AMD_AGS=1
 
 # Steam OS Sentinels ----------------------------------------------------
@@ -83,7 +83,7 @@ CURSOR="--cursor ${CURSOR_FILE}"
 # Preparing gamescope session run arguments
 RESOLUTION=""
 VRR_ARGS=""
-SDR_GAMUT="--sdr-gamut-wideness 1"
+SDR_GAMUT="--sdr-gamut-wideness 1 --hdr-wide-gammut-for-sdr --hdr-itm-sdr-nits 200 --hdr-sdr-content-nits 500 --hdr-itm-target-nits 800"
 
 if [ -n "$SCREEN_WIDTH" ] && [ -n "$SCREEN_HEIGHT" ] ; then
 	RESOLUTION="-W $SCREEN_WIDTH -H $SCREEN_HEIGHT"
@@ -156,9 +156,9 @@ GAMESCOPECMD="/usr/bin/gamescope \
 
 # Add socket and stats read
 if [ -z $VULKAN_ADAPTER ]; then
-		GAMESCOPECMD+=" -R $socket -T $stats"
+	GAMESCOPECMD+=" -R $socket -T $stats"
 else
-		GAMESCOPECMD+=" --prefer-vk-device $VULKAN_ADAPTER -R $socket -T $stats"
+	GAMESCOPECMD+=" --prefer-vk-device $VULKAN_ADAPTER -R $socket -T $stats"
 fi
 
 # Cicle logs before startup
