@@ -183,6 +183,24 @@ else
     fi
 fi
 
+# Attempt to fallback to a desktop session if something goes wrong too many times
+short_session_tracker_file="/tmp/chimeraos-short-session-tracker"
+short_session_duration=60
+short_session_count_before_reset=3
+SECONDS=0
+
+short_session_count=$(< "$short_session_tracker_file" wc -l)
+
+if [[ "$short_session_count" -ge "$short_session_count_before_reset" ]]; then
+    echo >&2 "gamescope-session-plus: detected broken ${CLIENT} or gamescope failure, will try to reset the session"
+
+    short_session_recover
+
+    # rearm
+    rm "$short_session_tracker_file"
+    exit 1
+fi
+
 # Log rotate the last session
 if [ -f "${HOME}"/.${CLIENT}-stdout.log ]; then
     cp "${HOME}"/.${CLIENT}-stdout.log "${HOME}"/.${CLIENT}-stdout.log.old
@@ -204,9 +222,10 @@ if read -r -t 3 response_x_display response_wl_display <> "$socket"; then
 	export GAMESCOPE_WAYLAND_DISPLAY="$response_wl_display"
 	# We're done!
 else
+	echo "gamescope failed" >> "$short_session_tracker_file"
 	kill -9 "$gamescope_pid"
 	wait
-	exit 0
+	exit 1
 	# Systemd or Session manager will have to restart session
 fi
 
@@ -229,6 +248,12 @@ fi
 
 # Start client application
 $CLIENTCMD > "${HOME}/.${CLIENT}-stdout.log" 2>&1
+
+if [[ "$SECONDS" -lt "$short_session_duration" ]]; then
+	echo "${CLIENT} failed" >> "$short_session_tracker_file"
+else
+	rm "$short_session_tracker_file"
+fi
 
 # When the client exits, kill gamescope nicely
 kill $gamescope_pid
