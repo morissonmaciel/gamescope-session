@@ -13,35 +13,6 @@ configure_xdm() {
   } | sudo tee "$XDM_CONF_FILE"
 }
 
-# # Clean-up legacy version
-# sudo rm -rf "/usr/bin/gnome-session-select"
-# sudo rm -rf "/usr/bin/steamos-session-select"
-# sudo rm -rf "/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
-# sudo rm -rf "/usr/share/wayland-sessions/gnome-oneshot.desktop"
-# sudo rm -rf "/usr/share/wayland-sessions/gamescope-custom.desktop"
-# sudo rm -rf "$HOME/.local/share/applications/Return to Gamemode.desktop"
-#
-# # Copying local files
-# copy_local "rootfs/usr/bin/export-gpu" "/usr/bin/export-gpu" true
-# copy_local "rootfs/lib/systemd/user/gamescope-session@.service" "/lib/systemd/user/gamescope-session@.service" true
-# copy_local "rootfs/usr/bin/gamescope-custom-session" "/usr/bin/gamescope-custom-session" true
-# copy_local "rootfs/usr/bin/return-to-gamemode" "/usr/bin/return-to-gamemode" true
-# copy_local "rootfs/usr/share/wayland-sessions/gamescope-session.desktop" "/usr/share/wayland-sessions/gamescope-session.desktop"
-# copy_local "rootfs/usr/share/applications/return-to-gamemode.desktop" "/usr/share/applications/return-to-gamemode.desktop"
-# copy_local "rootfs/usr/share/gamescope-custom/gamescope-script" "/usr/share/gamescope-custom/gamescope-script" true
-#
-# copy_local "rootfs/home/local/share/steamos/cursors/steamos-cursor-config" "$HOME/.local/share/steamos/cursors/steamos-cursor-config"
-# copy_local "rootfs/home/local/share/steamos/cursors/steamos-cursor.png" "$HOME/.local/share/steamos/cursors/steamos-cursor.png"
-#
-# # Rebuilding application database
-# sudo update-desktop-database
-#
-# # Configuring X Session
-# sh /usr/bin/export-gpu
-# configure_xdm
-#
-# sudo reboot -f
-
 print() {
   MESSAGE="$1"
   echo >&2 "$MESSAGE"
@@ -146,12 +117,28 @@ configure_gamescope() {
   )
 
   for file_path in "${EXECUTABLE_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs\//}" true
+    copy_local "$file_path" "${file_path/rootfs/}" true
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
   done
 
   for file_path in "${NORMAL_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs\//}" false
+    copy_local "$file_path" "${file_path/rootfs/}" false
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
   done
+
+  # Rebuilding application database
+  sudo update-desktop-database
+
+  # Ask for reboot to see new sessions
+  ask_reboot
 }
 
 configure_steam() {
