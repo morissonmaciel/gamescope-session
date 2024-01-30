@@ -1,4 +1,9 @@
-#!/bin/bash
+#!/usr/bin/bash
+
+declare -r CLIENT=$1
+declare -r CLIENT_CONFIG_DIR_USR=/usr/share/gamescope-session-plus/sessions.d
+declare -r CLIENT_CONFIG_DIR_ETC=/etc/gamescope-session-plus/sessions.d
+declare -r CLIENT_CONFIG_DIR_LOCAL="${XDG_CONFIG_HOME:-$HOME/.config}/gamescope-session-plus/sessions.d"
 
 # Fix intel color corruption
 export INTEL_DEBUG=norbc

@@ -7,9 +7,9 @@ HOME=$(getent passwd $USER | cut -d: -f6)
 AUTOLOGIN_CONF="/var/lib/AccountsService/users/gamer"
 
 # Configure autologin if Steam has been updated
-if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]];
-  sudo sed -i "s/Session=.*/Session=gamescope-session/g" "$AUTOLOGIN_CONF"
+if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
+  sudo -Eu $USER sed -i "s/Session=.*/Session=gamescope-session/" "$AUTOLOGIN_CONF"
 fi
 
 sudo -Eu $USER gnome-session-quit --logout --no-prompt
-sudo systemctl restart xdm
+sudo -Eu $USER systemctl restart xdm
