@@ -5,73 +5,137 @@ declare -r CLIENT_CONFIG_DIR_USR=/usr/share/gamescope-session-plus/sessions.d
 declare -r CLIENT_CONFIG_DIR_ETC=/etc/gamescope-session-plus/sessions.d
 declare -r CLIENT_CONFIG_DIR_LOCAL="${XDG_CONFIG_HOME:-$HOME/.config}/gamescope-session-plus/sessions.d"
 
-BASE_DE_NAME="silverblue"
+IMAGE_INFO="/usr/share/ublue-os/image-info.json"
+BASE_IMAGE_NAME=$(jq -r '."base-image-name"' < $IMAGE_INFO)
+BASE_IMAGE_NAME="silverblue"
+
+# Reset System76-Scheduler Foreground Process
+# dbus-send --system --dest=com.system76.Scheduler \
+#     /com/system76/Scheduler \
+#     com.system76.Scheduler.SetForegroundProcess \
+#     uint32:0
+
+# Reset power-profiles-daemon/TuneD to balanced if the current profile is power save, this allows desktop control without greatly harming gaming performance.
+if command -v tuned-adm > /dev/null; then
+    if grep -qz "powersave" <<< "$(tuned-adm active)"; then
+        tuned-adm profile balanced
+    fi
+elif command -v powerprofilesctl > /dev/null; then
+    if grep -qz "power-saver" <<< "$(powerprofilesctl get)"; then
+        powerprofilesctl set balanced
+    fi
+fi
+
+# default empty session recovery function
+short_session_recover () {
+	:
+}
+
+# default empty function to run after gamescope is started
+post_gamescope_start () {
+	:
+}
 
 # Fix intel color corruption
+# might come with some performance degradation but is better than a corrupted
+# color image
 export INTEL_DEBUG=norbc
-# Enabling full multi threading support for games with Mesa
-export mesa_glthread=true
+export MESA_GLTHREAD=true
+
+# Some environment variables by default (taken from Deck session)
+export SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS=0
+
+# Enable Mangoapp
+export MANGOHUD_CONFIGFILE=$(mktemp /tmp/mangohud.XXXXXXXX)
+
+export RADV_FORCE_VRS_CONFIG_FILE=$(mktemp /tmp/radv_vrs.XXXXXXXX)
 
 # Plop GAMESCOPE_MODE_SAVE_FILE into $XDG_CONFIG_HOME (defaults to ~/.config).
 export GAMESCOPE_MODE_SAVE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/gamescope/modes.cfg"
+export GAMESCOPE_PATCHED_EDID_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/gamescope/edid.bin"
 
 # Make path to gamescope mode save file.
 mkdir -p "$(dirname "$GAMESCOPE_MODE_SAVE_FILE")"
 touch "$GAMESCOPE_MODE_SAVE_FILE"
+#echo "Making Gamescope Mode Save file at \"$GAMESCOPE_MODE_SAVE_FILE\""
 
-# Mangohud config
-export MANGOHUD_CONFIGFILE="${HOME}/.mangohud/MangoHud.conf"
+# Make path to Gamescope edid patched file.
+mkdir -p "$(dirname "$GAMESCOPE_PATCHED_EDID_FILE")"
+touch "$GAMESCOPE_PATCHED_EDID_FILE"
+#echo "Making Gamescope patched edid at \"$GAMESCOPE_PATCHED_EDID_FILE\""
+
+# There is no way to set a color space for an NV12
+# buffer in Wayland. And the color management protocol that is
+# meant to let this happen is missing the color range...
+# So just workaround this with an ENV var that Remote Play Together
+# and Gamescope will use for now.
+export GAMESCOPE_NV12_COLORSPACE=k_EStreamColorspace_BT601
+
+# Initially write no_display to our config file
+# so we don't get mangoapp showing up before Steam initializes
+# on OOBE and stuff.
 mkdir -p "$(dirname "$MANGOHUD_CONFIGFILE")"
 echo "no_display" > "$MANGOHUD_CONFIGFILE"
 
-# Steam and Desktop session configuration
-export HOMETEST_DESKTOP=1
-export HOMETEST_USER=gamer
-export HOMETEST_DESKTOP_USER=gamer
-export HOMETEST_DESKTOP_SESSION=gnome
+# Prepare our initial VRS config file
+# for dynamic VRS in Mesa.
+mkdir -p "$(dirname "$RADV_FORCE_VRS_CONFIG_FILE")"
+echo "1x1" > "$RADV_FORCE_VRS_CONFIG_FILE"
 
-# Gamescope specific configuration
-export GAMESCOPE_NV12_COLORSPACE=k_EStreamColorspace_BT601
-export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
-export GAMESCOPE_LIMITER_FILE=$(mktemp /tmp/gamescope-limiter.XXXXXXXX)
-
-# General configuration
-export STEAM_DISPLAY_REFRESH_LIMITS=30,40,60,100,120
-export SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS=0
+# To expose vram info from radv
 export WINEDLLOVERRIDES=dxgi=n
 
-# RayTracing/Vulkan configuration
-export VKVD3D_CONFIG=dxr11,dxr
-export VKVD3D_FEATURE_LEVEL=12_2
+# Don't wait for buffers to idle on the client side before sending them to gamescope
 export vk_xwayland_wait_ready=false
 
-# HDR configuration
-export DXVK_HDR=1
-export ENABLE_GAMESCOPE_WSI=1
-#export PROTON_ENABLE_AMD_AGS=1
-
-# Preparing gamescope session run arguments
-RESOLUTION=""
-VRR_ARGS=""
-SDR_GAMUT=""
-#"--sdr-gamut-wideness 1"
-
-if [ -n "$SCREEN_WIDTH" ] && [ -n "$SCREEN_HEIGHT" ] ; then
-	RESOLUTION="-W $SCREEN_WIDTH -H $SCREEN_HEIGHT"
+# Make Qt apps use the styling and behaviour of the desktop session
+# This fixes some missing icons and unreadable text with Qt desktop apps in gamescope
+if [[ ${BASE_IMAGE_NAME} == 'silverblue' ]]; then
+  export QT_QPA_PLATFORM_THEME=gtk2
+else
+  export QT_QPA_PLATFORM_THEME=kde
 fi
 
-if [ -n "$SCREEN_REFRESH_RATE" ]; then
-	VRR_ARGS="-r $SCREEN_REFRESH_RATE"
+# To play nice with the short term callback-based limiter for now
+export GAMESCOPE_LIMITER_FILE=$(mktemp /tmp/gamescope-limiter.XXXXXXXX)
+
+# Temporary crutch until dummy plane interactions / etc are figured out
+export GAMESCOPE_DISABLE_ASYNC_FLIPS=1
+
+ulimit -n 524288
+
+# Default Steam Gamemode UI Background.
+# Applied here instead of gamescope-session-steam due to device-quirks overriding it.
+# export STEAM_UPDATEUI_PNG_BACKGROUND=/usr/share/plymouth/themes/steamos/bazzite.png
+
+# Source device quirks if exists
+if [ -f /usr/share/gamescope-session-plus/device-quirks ]; then
+  . /usr/share/gamescope-session-plus/device-quirks
 fi
+
+# Source client app specific configuration files
+# ex: sessions.d/steam
+set -a
+for i in ${CLIENT_CONFIG_DIR_USR}/${CLIENT} ${CLIENT_CONFIG_DIR_ETC}/${CLIENT} ${CLIENT_CONFIG_DIR_LOCAL}/${CLIENT} ;
+do
+    [[ -f "${i}" ]] && . "${i}"
+done
+set +a
+
+# Source user configuration from ~/.config/environment.d
+set -a
+for i in "${HOME}"/.config/environment.d/*.conf ;
+do
+    [[ -f "${i}" ]] && . "${i}"
+done
+set +a
 
 # Setup socket for gamescope
-
-# -- Create run directory file for startup and stats sockets
+# Create run directory file for startup and stats sockets
 tmpdir="$([[ -n ${XDG_RUNTIME_DIR+x} ]] && mktemp -p "$XDG_RUNTIME_DIR" -d -t gamescope.XXXXXXX)"
 socket="${tmpdir:+$tmpdir/startup.socket}"
 stats="${tmpdir:+$tmpdir/stats.pipe}"
-
-# -- Fail early if we don't have a proper runtime directory setup
+# Fail early if we don't have a proper runtime directory setup
 if [[ -z $tmpdir || -z ${XDG_RUNTIME_DIR+x} ]]; then
 	echo >&2 "!! Failed to find run directory in which to create stats session sockets (is \$XDG_RUNTIME_DIR set?)"
 	exit 0
@@ -93,43 +157,6 @@ if flock -n 9 && rm -f "$sessionlink" && ln -sf "$tmpdir" "$sessionlink"; then
 else
 	echo >&2 "!! Failed to claim global gamescope stats session"
 fi
-
-# Make Qt apps use the styling and behaviour of the desktop session
-# This fixes some missing icons and unreadable text with Qt desktop apps in gamescope
-if [[ ${BASE_DE_NAME} == 'silverblue' ]]; then
-  export QT_QPA_PLATFORM_THEME=gtk2
-else
-  export QT_QPA_PLATFORM_THEME=kde
-fi
-
-
-ulimit -n 524288
-
-# Default Steam Gamemode UI Background.
-# Applied here instead of gamescope-session-steam due to device-quirks overriding it.
-# Ex: /usr/share/plymouth/themes/steamos/bazzite.png
-export STEAM_UPDATEUI_PNG_BACKGROUND=""
-
-# Source device quirks if exists
-if [ -f /usr/share/gamescope-session-plus/device-quirks ]; then
-  . /usr/share/gamescope-session-plus/device-quirks
-fi
-
-# Source client app specific configuration files
-set -a
-for i in ${CLIENT_CONFIG_DIR_USR}/${CLIENT} ${CLIENT_CONFIG_DIR_ETC}/${CLIENT} ${CLIENT_CONFIG_DIR_LOCAL}/${CLIENT} ;
-do
-    [[ -f "${i}" ]] && . "${i}"
-done
-set +a
-
-# Source user configuration from ~/.config/environment.d
-set -a
-for i in "${HOME}"/.config/environment.d/*.conf ;
-do
-    [[ -f "${i}" ]] && . "${i}"
-done
-set +a
 
 CURSOR=""
 # Use specified cursor if file exists
@@ -229,10 +256,28 @@ else
 	# Systemd or Session manager will have to restart session
 fi
 
+# Run session defined hook
+post_gamescope_start
+
 # Input method support if present
 if command -v /usr/bin/ibus-daemon > /dev/null; then
     /usr/bin/ibus-daemon -d -r --panel=disable --emoji-extension=disable
 fi
+
+# if [[ ":Galileo:Jupiter:" =~ "$(cat /sys/devices/virtual/dmi/id/product_name)" ]]; then
+#     # Prevent default power button behavior
+#     systemd-inhibit --what=handle-suspend-key:handle-power-key:handle-hibernate-key --who=gamescope-session --why="gamescope-session handles power button events" sleep infinity &
+#     inhibitor_pid="$!"
+#
+#     # Start SteamOS's power button handler daemon, this passes power button events to Steam.
+#     if command -v /usr/bin/powerbuttond > /dev/null; then
+# 	(while true; do
+#         	/usr/bin/powerbuttond
+# 	done) &
+#     else
+#         /usr/lib/hwsupport/power-button-handler.py 2>&1 &
+#     fi
+# fi
 
 # If we have mangoapp binary start it
 if command -v mangoapp > /dev/null; then
@@ -262,13 +307,17 @@ kill $gamescope_pid
 sleep 5 &
 sleep_pid="$!"
 
-# Catch reboot and poweroof sentinels here
-if [[ -e "$STEAMOS_STEAM_REBOOT_SENTINEL" ]]; then
-	rm -f "$STEAMOS_STEAM_REBOOT_SENTINEL"
+# Catch reboot and powerof sentinels here
+if [[ -e "$REBOOT_SENTINEL" ]]; then
+	rm -f "$REBOOT_SENTINEL"
+	# rearm short session tracker
+	rm "$short_session_tracker_file"
 	reboot
 fi
-if [[ -e "$STEAMOS_STEAM_SHUTDOWN_SENTINEL" ]]; then
-	rm -f "$STEAMOS_STEAM_SHUTDOWN_SENTINEL"
+if [[ -e "$SHUTDOWN_SENTINEL" ]]; then
+	rm -f "$SHUTDOWN_SENTINEL"
+	# rearm short session tracker
+	rm "$short_session_tracker_file"
 	poweroff
 fi
 
@@ -278,7 +327,7 @@ wait -n $gamescope_pid $sleep_pid || ret=$?
 
 # If we get a SIGTERM/etc while waiting this happens.  Proceed to kill -9 everything but complain
 if [[ $ret = 127 ]]; then
-	echo >&2 "gamescope-session: Interrupted while waiting on teardown, force-killing remaining tasks"
+	echo >&2 "gamescope-session-plus: Interrupted while waiting on teardown, force-killing remaining tasks"
 fi
 
 # Kill all remaining jobs and warn if unexpected things are in there (should be just sleep_pid, unless gamescope failed
@@ -286,9 +335,9 @@ fi
 for job in $(jobs -p); do
 	# Warn about unexpected things
 	if [[ $ret != 127 && $job = "$gamescope_pid" ]]; then
-		echo >&2 "gamescope-session: gamescope timed out while exiting, killing"
-	elif [[ $ret != 127 && $job != "$sleep_pid" ]]; then
-		echo >&2 "gamescope-session: unexpected background pid $job at teardown: "
+		echo >&2 "gamescope-session-plus: gamescope timed out while exiting, killing"
+	elif [[ $ret != 127 && $job != "$sleep_pid" && $job != "$inhibitor_pid" ]]; then
+		echo >&2 "gamescope-session-plus: unexpected background pid $job at teardown: "
 		# spew some debug about it
 		ps -p "$job" >&2
 	fi
