@@ -105,6 +105,7 @@ configure_gamescope() {
 
   # Configuring gamescope-session
   EXECUTABLE_LIST=(
+    "rootfs/lib/systemd/user/gamescope-session@.service"
     "rootfs/usr/share/gamescope-custom/gamescope-script"
     "rootfs/usr/bin/export-gpu"
     "rootfs/usr/bin/gamescope-custom-session"
