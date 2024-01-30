@@ -124,7 +124,10 @@ configure_gamescope() {
 
   if [ $? -ne 0 ]; then
     show_something_wrong
+    exit 1
   fi
+
+  # Configuring gamescope-session
 }
 
 configure_steam() {
@@ -155,19 +158,20 @@ configure_grub() {
   show_admin_password_alert
 
   GRUB_FILE="/etc/default/grub"
-  OPTIMIZED_CMD="amd_iommu=off amdgpu.gttsize=8128 spi_amd.speed_dev=1 rd.luks.options=discard rhgb mitigations=auto quiet"
+  QUIET_CMD="quiet splash loglevel=2 acpi=nodefer"
+  OPTIMIZED_CMD="amd_iommu=off amdgpu.gttsize=8128 spi_amd.speed_dev=1 rd.luks.options=discard rhgb"
 
   # Restore the previous backup to avoid GRUB misbehavior
   restore_backup "$GRUB_FILE"
   create_backup "$GRUB_FILE"
 
-  sudo sed -i 's/GRUB_TIMEOUT=[0-9]*/GRUB_TIMEOUT=0/g' "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"\"/" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_TIMEOUT=[0-9]*/GRUB_TIMEOUT=0/g" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_HIDDEN_TIMEOUT=[0-9]*/GRUB_HIDDEN_TIMEOUT=0/g" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$QUIET_CMD\"/" "$GRUB_FILE"
   sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$OPTIMIZED_CMD\"/" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/" "$GRUB_FILE"
-  
-  echo 'GRUB_TIMEOUT_STYLE=hidden' | sudo tee -a "$GRUB_FILE" 1>/dev/null
-  echo 'GRUB_HIDDEN_TIMEOUT=1' | sudo tee -a "$GRUB_FILE" 1>/dev/null
+  sudo sed -i "s/GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/" "$GRUB_FILE" || echo "GRUB_TIMEOUT_STYLE=hidden" | sudo tee -a "$GRUB_FILE"
+  sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/" "$GRUB_FILE" || echo "GRUB_DISABLE_SUBMENU=true" | sudo tee -a "$GRUB_FILE"
+  sudo sed -i "s/GRUB_HIDDEN_TIMEOUT_QUIET=.*/GRUB_HIDDEN_TIMEOUT_QUIET=true/" "$GRUB_FILE" || echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" | sudo tee -a "$GRUB_FILE"
 
   if [ -d /sys/firmware/efi ]; then
     sudo grub2-mkconfig -o /etc/grub2-efi.cfg
