@@ -2,17 +2,6 @@
 
 # set -e
 
-create_backup() {
-    FILE="$1"
-    BACKUP="${2:-true}"  # Default value is true if not provided
-
-    if [ "$BACKUP" = true ] && [ -f "$FILE" ]; then
-        BACKUP_FILE="${FILE}.old"
-        sudo rm -rf "$BACKUP_FILE"
-        #sudo cp "$FILE" "$BACKUP_FILE"
-    fi
-}
-
 copy_local() {
   SRC_FILE="$1"
   DEST_FILE="$2"
@@ -75,6 +64,24 @@ print() {
   echo >&2 "$MESSAGE"
 }
 
+ask_reboot() {
+  if zenity --question --title="Reboot" \
+    --text="To make the configuration take effect, you need to reboot your machine. Do you want to proceed now?"; then
+    sudo reboot
+  fi
+}
+
+create_backup() {
+    FILE="$1"
+    BACKUP="${2:-true}"  # Default value is true if not provided
+    BACKUP_FILE="${FILE}.bak"
+
+    if [ ! -f "$BACKUP_FILE" ] && [ "$BACKUP" = true ] && [ -f "$FILE" ]; then
+        print "Creating a backup file $BACKUP_FILE for the original $FILE. You can further restore in case of error."
+        sudo cp "$FILE" "$BACKUP_FILE"
+    fi
+}
+
 install() {
   # Accept any number of package names as arguments
   PACKAGES=("$@")
@@ -124,7 +131,35 @@ configure_steam() {
 }
 
 configure_grub() {
-  :
+  zenity --info --text="Configuration process may require your administrative password. Make sure to enter it when prompted in the terminal."
+
+  GRUB_FILE="/etc/default/grub"
+  OPTIMIZED_CMD="amd_iommu=off amdgpu.gttsize=8128 spi_amd.speed_dev=1 rd.luks.options=discard rhgb mitigations=auto quiet"
+
+  create_backup "$GRUB_FILE"
+
+  sudo sed -i 's/GRUB_TIMEOUT=8/GRUB_TIMEOUT=0/g' "$GRUB_FILE"
+  sudo sed -i 's/GRUB_TIMEOUT=[0-9]*/GRUB_TIMEOUT=0/g' "$GRUB_FILE"
+  sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"\"/" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$OPTIMIZED_CMD\"/" "$GRUB_FILE"
+
+  echo 'GRUB_TIMEOUT_STYLE=hidden' | sudo tee -a "$GRUB_FILE" 1>/dev/null
+  echo 'GRUB_HIDDEN_TIMEOUT=1' | sudo tee -a "$GRUB_FILE" 1>/dev/null
+
+  if [ -d /sys/firmware/efi ]; then
+    sudo grub2-mkconfig -o /etc/grub2-efi.cfg
+  else
+    sudo grub2-mkconfig -o /etc/grub2.cfg
+  fi
+
+  if [ $? -ne 0 ]; then
+    zenity --warning --text="Something went wrong with configuration process. Please check terminal log and try again."
+    exit 1
+  fi
+
+  if [ $? -eq 0 ]; then
+    ask_reboot
+  fi
 }
 
 # Check zenity availability
@@ -138,7 +173,7 @@ RESULT=$(zenity --list --radiolist \
           --column="Install" --column="Id" --column="Description" \
           TRUE gamescope "Install and configure Gamescope (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
-          FALSE grub "Configure GRUB (for quiet and optmized boot)")
+          FALSE grub "Hide GRUB (for quiet and optmized boot)")
 
 if [ -n "$RESULT" ]; then
   case $RESULT in
@@ -148,6 +183,6 @@ if [ -n "$RESULT" ]; then
   esac
 
   if [ $? -eq 0 ]; then
-    zenity --info --text="Installation process completed for $RESULT"
+    print "Installation process completed for $RESULT"
   fi
 fi
