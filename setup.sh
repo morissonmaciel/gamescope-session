@@ -2,23 +2,6 @@
 
 # set -e
 
-copy_local() {
-  SRC_FILE="$1"
-  DEST_FILE="$2"
-  EXECUTABLE="${3:-false}"
-
-  if [ -f "$DEST_FILE" ]; then
-    create_backup "$DEST_FILE"
-  fi
-
-  sudo mkdir -p "$(dirname "$DEST_FILE")"
-  cat "$SRC_FILE" | sudo tee "$DEST_FILE"
-
-  if [ "$EXECUTABLE" = "true" ]; then
-    sudo chmod +x "$DEST_FILE"
-  fi
-}
-
 configure_xdm() {
   XDM_CONF_FILE="/var/lib/AccountsService/users/gamer"
 
@@ -118,6 +101,28 @@ install() {
   done
 }
 
+copy_local() {
+  SRC_FILE="$1"
+  DEST_FILE="$2"
+  EXECUTABLE="${3:-false}"
+
+  if [ -f "$DEST_FILE" ]; then
+    restore_backup "$DEST_FILE"
+    create_backup "$DEST_FILE"
+  fi
+
+  sudo mkdir -p "$(dirname "$DEST_FILE")"
+  cat "$SRC_FILE" | sudo tee "$DEST_FILE"
+
+  if [ "$EXECUTABLE" = "true" ]; then
+    sudo chmod +x "$DEST_FILE"
+  fi
+
+  print "File $DEST_FILE copied."
+}
+
+# MAIN FUNCS -------------------------------------------------------------------
+
 configure_gamescope() {
   configure_steam
   install "gamescope" "mangoapp" "vkbasalt"
@@ -128,6 +133,25 @@ configure_gamescope() {
   fi
 
   # Configuring gamescope-session
+  EXECUTABLE_LIST=(
+    "rootfs/usr/share/gamescope-custom/gamescope-script"
+    "rootfs/usr/bin/export-gpu"
+    "rootfs/usr/bin/gamescope-custom-session"
+    "rootfs/usr/bin/return-to-gamemode"
+  )
+
+  NORMAL_LIST=(
+    "rootfs/usr/share/wayland-sessions/gamescope-session.desktop"
+    "rootfs/usr/share/applications/return-to-gamemode.desktop"
+  )
+
+  for file_path in "${EXECUTABLE_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs\//}" true
+  done
+
+  for file_path in "${NORMAL_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs\//}" false
+  done
 }
 
 configure_steam() {
@@ -189,6 +213,8 @@ configure_grub() {
   fi
 }
 
+# MAIN SECTION -----------------------------------------------------------------
+
 # Check zenity availability
 if ! command -v zenity > /dev/null; then
   	print "zenity not installed. Script will proceed with installation."
@@ -198,7 +224,7 @@ fi
 RESULT=$(zenity --list --radiolist \
           --title='Choose an option form list below' \
           --column="Install" --column="Id" --column="Description" \
-          TRUE gamescope "Install and configure Gamescope (this will install Steam either)" \
+          TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
           FALSE grub "Hide GRUB (for quiet and optmized boot)")
 
