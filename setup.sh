@@ -137,6 +137,10 @@ configure_gamescope() {
     fi
   done
 
+  # Copying files from special folders
+  copy_local "rootfs/home/config/environment.d/10-gamescope-session-custom.conf" \
+    "/home/.config/environment.d/10-gamescope-session-custom.conf"
+
   # Rebuilding application database
   sudo update-desktop-database
 
