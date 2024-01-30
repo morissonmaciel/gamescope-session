@@ -2,6 +2,6 @@
 Encoding=UTF-8
 Name=Gamescope Session
 Comment=Gamescope Session for SteamOS
-Exec=/usr/bin/gamescope-custom-session steam
+Exec=/usr/share/gamescope-custom/gamescope-script steam
 Type=Application
 DesktopNames=gamescope
