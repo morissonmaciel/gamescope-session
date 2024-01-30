@@ -108,6 +108,7 @@ configure_gamescope() {
     "rootfs/lib/systemd/user/gamescope-session-plus@.service"
     "rootfs/usr/share/gamescope-session-plus/gamescope-session-plus"
     "rootfs/usr/bin/export-gpu"
+    "rootfs/usr/share/gamescope-session-plus/device-quircks"
     "rootfs/usr/bin/gamescope-session-plus"
     "rootfs/usr/bin/return-to-gamemode"
   )
