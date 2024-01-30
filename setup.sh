@@ -64,8 +64,18 @@ print() {
   echo >&2 "$MESSAGE"
 }
 
+show_admin_password_alert() {
+  zenity --info --no-wrap \
+    --text="Installation process may require your administrative password. Make sure to enter it when prompted in the terminal."
+}
+
+show_something_wrong() {
+  zenity --warning --no-wrap \
+    --text="Something went wrong with installation process. Please check terminal log and try again."
+}
+
 ask_reboot() {
-  if zenity --question --title="Reboot" \
+  if zenity --question --title="Reboot" --no-wrap \
     --text="To make the configuration take effect, you need to reboot your machine. Do you want to proceed now?"; then
     sudo reboot
   fi
@@ -79,6 +89,16 @@ create_backup() {
     if [ ! -f "$BACKUP_FILE" ] && [ "$BACKUP" = true ] && [ -f "$FILE" ]; then
         print "Creating a backup file $BACKUP_FILE for the original $FILE. You can further restore in case of error."
         sudo cp "$FILE" "$BACKUP_FILE"
+    fi
+}
+
+restore_backup() {
+    FILE="$1"
+    BACKUP_FILE="${FILE}.bak"
+
+    if [ -f "$BACKUP_FILE" ]; then
+        print "Restorinng backup file $BACKUP_FILE for the original $FILE."
+        sudo cp "$BACKUP_FILE" "$FILE"
     fi
 }
 
@@ -103,23 +123,24 @@ configure_gamescope() {
   install "gamescope" "mangoapp" "vkbasalt"
 
   if [ $? -ne 0 ]; then
-    zenity --warning --text="Something went wrong with installation process. Please check terminal log and try again."
+    show_something_wrong
   fi
 }
 
 configure_steam() {
-  zenity --info --text="Installation process may require your administrative password. Make sure to enter it when prompted in the terminal."
+  show_admin_password_alert
   install "steam" "steam-devices"
 
   if [ $? -ne 0 ]; then
-    zenity --warning --text="Something went wrong with installation process. Please check terminal log and try again."
+    show_something_wrong
     exit 1
   fi
 
   if [ $? -eq 0 ]; then
     # Wait for Steam completion
     steam --silent 2>&1 &
-    zenity --info --text="Please wait for the completion of the Steam initial setup, and then close the login window. There is no need to log in."
+    zenity --info --no-wrap \
+      --text="Please wait for the completion of the Steam initial setup, and then close the login window. There is no need to log in."
   fi
 
   if [ $? -eq 0 ]; then
@@ -131,18 +152,20 @@ configure_steam() {
 }
 
 configure_grub() {
-  zenity --info --text="Configuration process may require your administrative password. Make sure to enter it when prompted in the terminal."
+  show_admin_password_alert
 
   GRUB_FILE="/etc/default/grub"
   OPTIMIZED_CMD="amd_iommu=off amdgpu.gttsize=8128 spi_amd.speed_dev=1 rd.luks.options=discard rhgb mitigations=auto quiet"
 
+  # Restore the previous backup to avoid GRUB misbehavior
+  restore_backup "$GRUB_FILE"
   create_backup "$GRUB_FILE"
 
-  sudo sed -i 's/GRUB_TIMEOUT=8/GRUB_TIMEOUT=0/g' "$GRUB_FILE"
   sudo sed -i 's/GRUB_TIMEOUT=[0-9]*/GRUB_TIMEOUT=0/g' "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"\"/" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$OPTIMIZED_CMD\"/" "$GRUB_FILE"
-
+  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"\"/" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$OPTIMIZED_CMD\"/" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/" "$GRUB_FILE"
+  
   echo 'GRUB_TIMEOUT_STYLE=hidden' | sudo tee -a "$GRUB_FILE" 1>/dev/null
   echo 'GRUB_HIDDEN_TIMEOUT=1' | sudo tee -a "$GRUB_FILE" 1>/dev/null
 
@@ -153,7 +176,7 @@ configure_grub() {
   fi
 
   if [ $? -ne 0 ]; then
-    zenity --warning --text="Something went wrong with configuration process. Please check terminal log and try again."
+    show_something_wrong
     exit 1
   fi
 
