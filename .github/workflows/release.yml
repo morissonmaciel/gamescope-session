@@ -21,25 +21,16 @@ jobs:
         id: prepare_dist_folder
         run: mkdir dist
 
-      - name: Zip Release
-        uses: TheDoctor0/zip-release@0.7.6
-        with:
-          filename: "release_${{ env.VERSION }}.zip"
-          path: dist/
-          directory: .
-          exclusions: |
-            dist/**
-          type: zip
+      - name: Create Zip
+        id: create_zip
+        run: zip -r -q "dist/release_${{ env.VERSION }}.zip" .
 
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: Commit and push
+        uses: EndBug/add-and-commit@v7
         with:
-          files: |
-            dist/**  # Assuming your build output is in the dist directory
-          token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          add: '["dist/release_${{ env.VERSION }}.zip"]'
+          message: 'Versioning zip for "release ${{ env.VERSION }}"'
+          push: true
   
   release:
     runs-on: ubuntu-latest
