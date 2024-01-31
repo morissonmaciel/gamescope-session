@@ -1,11 +1,11 @@
 name: Build and Release
 
 on:
-  push:
-    branches:
-      - main  # Change this to your main branch name
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows:
+      - 'Build and Release'
+    types:
+      - completed
 
 jobs:
   build:
