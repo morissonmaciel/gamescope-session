@@ -29,4 +29,4 @@ jobs:
           git config --global user.email "@githubgamescopebot"
           git add -A
           git commit -m "Zipping and releasing ${{ github.ref_name }}"
-          git push --repo="https://${{ secrets.GITHUB_TOKEN }}@github.com/morissonmaciel/gamescope-session.git"
+          echo "git push --repo='https://${{ secrets.GITHUB_TOKEN }}@github.com/morissonmaciel/gamescope-session.git'"
