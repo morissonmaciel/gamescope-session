@@ -140,8 +140,10 @@ configure_gamescope() {
     "rootfs/lib/systemd/user/gamescope-session-plus@.service"
     "rootfs/usr/bin/export-gpu"
     "rootfs/usr/bin/gamescope-session-plus"
+    "rootfs/usr/bin/gnome-session-oneshot"
     "rootfs/usr/bin/return-to-gamemode"
-    "rootfs/usr/bin/steam-os-select-branch"
+    "rootfs/usr/bin/steamos-select-branch"
+    "rootfs/usr/bin/steamos-session-select"
     "rootfs/usr/share/gamescope-session-plus/gamescope-session-plus"
     "rootfs/usr/share/gamescope-session-plus/sessions.d/steam"
     "rootfs/usr/share/gamescope-session-plus/device-quirks"
@@ -149,6 +151,7 @@ configure_gamescope() {
 
   NORMAL_LIST=(
     "rootfs/usr/share/wayland-sessions/gamescope-session.desktop"
+    "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
     "rootfs/usr/share/applications/return-to-gamemode.desktop"
   )
 
@@ -216,7 +219,6 @@ configure_polkit_helpers() {
   NORMAL_LIST=(
     "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules",
     "rootfs/usr/share/polkit-1/actions/org.gamescopesession.host.policy"
-    "rootfs/usr/share/polkit-1/actions/org.gamescopesession.session.select.policy"
   )
 
   for file_path in "${NORMAL_LIST[@]}"; do
@@ -225,6 +227,16 @@ configure_polkit_helpers() {
     if [ $? -ne 0 ]; then
       show_something_wrong
       exit 1
+    fi
+  done
+
+  DELETED=(
+    "rootfs/usr/share/polkit-1/actions/org.gamescopesession.session.select.policy"
+  )
+
+  for file_path in "${DELETED[@]}"; do
+    if [ -f file_path ]; then
+      sudo rm -rf "${file_path/rootfs/}"
     fi
   done
 }
