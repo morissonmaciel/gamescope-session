@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -21,10 +20,14 @@ jobs:
         id: create_zip
         run: zip -r -q "dist/release_${{ github.ref_name }}.zip" .
 
-      - name: Commit and Push
-        - uses: oleksiyrudenko/gha-git-credentials@v2-latest
-          with:
-            token: '${{ secrets.GITHUB_TOKEN }}'
-        - run: |
-            git add -A
-            git commit -m "Zipping and releasing $ {{ github.ref_name }}"
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Github Token
+        uses: oleksiyrudenko/gha-git-credentials@v2-latest
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}'
+      - name: Commit and Push Zip
+        run: |
+          git add -A
+          git commit -m "Zipping and releasing $ {{ github.ref_name }}"
