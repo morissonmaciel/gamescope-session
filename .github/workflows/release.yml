@@ -6,8 +6,10 @@ on:
       - 'v*'
 
 jobs:
-  build:
+  public:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -20,13 +22,8 @@ jobs:
         id: create_zip
         run: zip -r -q "dist/release_${{ github.ref_name }}.zip" .
 
-  publish:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      contents: write
-    steps:
       - name: Commit and Push Zip
+        id: commit-push-zip 
         run: |
           git config --global user.name "Github Gamescope Session Bot"
           git config --global user.email "@githubgamescopebot"
