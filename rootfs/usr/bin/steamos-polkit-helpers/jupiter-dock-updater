@@ -1,4 +1,4 @@
 #!/usr/bin/bash
 
-# SteamOS script related to update Steam Deck docker through polkit elevation command 
-exit 0
+# SteamOS script related to update Steam Deck docker through polkit elevation command
+exit 7
