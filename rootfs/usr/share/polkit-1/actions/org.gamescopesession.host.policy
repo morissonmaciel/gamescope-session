@@ -7,6 +7,17 @@
   <vendor>Gamescope Session Plus</vendor>
   <vendor_url>http://gamescope.org</vendor_url>
 
+  <action id="org.policykit.steamos.pkexec.run-steamos-jupiter-dockupdater">
+    <description>Run the jupiter dock updater helper</description>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/steamos-polkit-helpers/jupiter-dock-updater</annotate>
+  </action>
+
   <action id="org.policykit.steamos.pkexec.run-set-hostname">
     <description>Set the hostname</description>
     <icon_name>package-x-generic</icon_name>
@@ -27,6 +38,28 @@
       <allow_active>yes</allow_active>
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/steamos-polkit-helpers/steamos-set-timezone</annotate>
+  </action>
+
+  <action id="org.policykit.steamos.pkexec.run-steamos-reboot-now">
+    <description>Reboot system</description>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/steamos-polkit-helpers/steamos-reboot-now</annotate>
+  </action>
+
+  <action id="org.policykit.steamos.pkexec.run-steamos-poweroff-now">
+    <description>Poweroff system</description>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/steamos-polkit-helpers/steamos-poweroff-now</annotate>
   </action>
 
 </policyconfig>

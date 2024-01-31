@@ -163,6 +163,8 @@ configure_polkit_helpers() {
 
   EXECUTABLE_LIST=(
     "rootfs/usr/bin/steamos-polkit-helpers/jupiter-dock-updater"
+    "rootfs/usr/bin/steamos-polkit-helpers/steamos-poweroff-now"
+    "rootfs/usr/bin/steamos-polkit-helpers/steamos-reboot-now"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-hostname"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-timezone"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-update"
@@ -180,6 +182,7 @@ configure_polkit_helpers() {
   NORMAL_LIST=(
     "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules",
     "rootfs/usr/share/polkit-1/actions/org.gamescopesession.host.policy"
+    "rootfs/usr/share/polkit-1/actions/org.gamescopesession.session.select.policy"
   )
 
   for file_path in "${NORMAL_LIST[@]}"; do
