@@ -262,7 +262,7 @@ configure_grub() {
 
   GRUB_FILE="/etc/default/grub"
   QUIET_CMD="quiet splash loglevel=2 acpi=nodefer"
-  OPTIMIZED_CMD="amd_iommu=off amdgpu.gttsize=8128 spi_amd.speed_dev=1 rd.luks.options=discard rhgb"
+  OPTIMIZED_CMD=""
 
   # Restore the previous backup to avoid GRUB misbehavior
   restore_backup "$GRUB_FILE"
@@ -276,11 +276,8 @@ configure_grub() {
   sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/" "$GRUB_FILE" || echo "GRUB_DISABLE_SUBMENU=true" | sudo tee -a "$GRUB_FILE"
   sudo sed -i "s/GRUB_HIDDEN_TIMEOUT_QUIET=.*/GRUB_HIDDEN_TIMEOUT_QUIET=true/" "$GRUB_FILE" || echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" | sudo tee -a "$GRUB_FILE"
 
-  if [ -d /sys/firmware/efi ]; then
-    sudo grub2-mkconfig -o /etc/grub2-efi.cfg
-  else
-    sudo grub2-mkconfig -o /etc/grub2.cfg
-  fi
+  # Update grub manually
+  sudo grub2-mkconfig -o /boot/grub2/grub.cfg
 
   if [ $? -ne 0 ]; then
     show_something_wrong
