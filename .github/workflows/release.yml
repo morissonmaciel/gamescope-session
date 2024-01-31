@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 jobs:
-  public:
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,9 +23,10 @@ jobs:
         run: zip -r -q "dist/release_${{ github.ref_name }}.zip" .
 
       - name: Commit and Push Zip
-        id: commit-push-zip 
+        id: commit-push-zip
         run: |
           git config --global user.name "Github Gamescope Session Bot"
           git config --global user.email "@githubgamescopebot"
           git add -A
-          git commit -m "Zipping and releasing $ {{ github.ref_name }}"
+          git commit -m "Zipping and releasing ${{ github.ref_name }}"
+          git push --repo="https://${{ secrets.GITHUB_TOKEN }}@github.com/morissonmaciel/gamescope-session.git"
