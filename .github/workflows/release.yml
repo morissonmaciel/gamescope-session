@@ -19,11 +19,12 @@ jobs:
 
       - name: Create Zip
         id: create_zip
-        run: zip -r -q "dist/release_$GITHUB_REF_NAME.zip" .
+        run: zip -r -q "dist/release_${{ github.ref_name }}.zip" .
 
-      - name: Commit and push
-        uses: EndBug/add-and-commit@v7
+      - name: Github commit and push
+        uses: github-actions-x/commit@v2.9
         with:
-          add: "['dist/release_$GITHUB_REF_NAME.zip']"
-          message: "Versioning zip for release $GITHUB_REF_NAME"
-          push: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Zipping and releasing $ {{ github.ref_name }}"
+          files: "dist/release_${{ github.ref_name }}.zip"
+          branch: main
