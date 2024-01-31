@@ -17,15 +17,9 @@ jobs:
         id: extract_version
         run: echo "VERSION=$(echo ${{ steps.create_release.outputs.release }} | cut -d'/' -f7)" >> $GITHUB_ENV
 
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            dist/**  # Assuming your build output is in the dist directory
-          token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare Distribution Folder
+        id: prepare_dist_folder
+        run: mkdir dist
 
       - name: Zip Release
         uses: TheDoctor0/zip-release@0.7.6
@@ -37,6 +31,16 @@ jobs:
             dist/**
           type: zip
 
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/**  # Assuming your build output is in the dist directory
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
   release:
     runs-on: ubuntu-latest
     needs: build
