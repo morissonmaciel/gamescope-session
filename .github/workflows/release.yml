@@ -23,12 +23,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: write
     steps:
-      - name: Get Github Token
-        uses: oleksiyrudenko/gha-git-credentials@v2-latest
-        with:
-          token: '${{ secrets.GITHUB_TOKEN }}'
       - name: Commit and Push Zip
         run: |
+          git config --global user.name "Github Gamescope Session Bot"
+          git config --global user.email "@githubgamescopebot"
           git add -A
           git commit -m "Zipping and releasing $ {{ github.ref_name }}"
