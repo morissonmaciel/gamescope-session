@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+
+# SteamOS script related to update Steam OS iteself through polkit elevation command
+exit 7

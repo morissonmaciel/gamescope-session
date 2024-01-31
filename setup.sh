@@ -141,11 +141,55 @@ configure_gamescope() {
   copy_local "rootfs/home/config/environment.d/10-gamescope-session-custom.conf" \
     "$HOME/.config/environment.d/10-gamescope-session-custom.conf"
 
+  # Configure polkit rules and actions once it is needed by SteamOS
+  configure_polkit_helpers false
+
   # Rebuilding application database
   sudo update-desktop-database
 
   # Ask for reboot to see new sessions
   ask_reboot
+}
+
+configure_polkit_helpers() {
+  SHOW_ALERT="${1:-true}"
+
+  if [ "$SHOW_ALERT" = "true" ]; then
+    show_admin_password_alert
+  fi
+
+  # Adding current user to wheel group
+  sudo usermod -a -G wheel $USER
+
+  EXECUTABLE_LIST=(
+    "rootfs/usr/bin/steamos-polkit-helpers/jupiter-dock-updater"
+    "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-hostname"
+    "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-timezone"
+    "rootfs/usr/bin/steamos-polkit-helpers/steamos-update"
+  )
+
+  for file_path in "${EXECUTABLE_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" true
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
+  done
+
+  NORMAL_LIST=(
+    "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules",
+    "rootfs/usr/share/polkit-1/actions/org.gamescopesession.host.policy"
+  )
+
+  for file_path in "${NORMAL_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" false
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
+  done
 }
 
 configure_steam() {
@@ -220,13 +264,15 @@ RESULT=$(zenity --list --radiolist \
           --column="Install" --column="Id" --column="Description" \
           TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
-          FALSE grub "Hide GRUB (for quiet and optmized boot)")
+          FALSE grub "Hide GRUB (for quiet and optmized boot)" \
+          FALSE polkit "Configure SteamOS polkit helpers")
 
 if [ -n "$RESULT" ]; then
   case $RESULT in
     "gamescope") configure_gamescope;;
     "steam") configure_steam;;
     "grub") configure_grub;;
+    "polkit") configure_polkit_helpers;;
   esac
 
   if [ $? -eq 0 ]; then
