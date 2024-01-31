@@ -26,5 +26,5 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Zipping and releasing $ {{ github.ref_name }}"
-          files: []"dist/release_${{ github.ref_name }}.zip"]
+          files: ["dist/release_${{ github.ref_name }}.zip"]
           push-branch: main
