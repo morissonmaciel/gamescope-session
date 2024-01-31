@@ -94,6 +94,38 @@ copy_local() {
 
 # MAIN FUNCS -------------------------------------------------------------------
 
+enable_steam_lan_transfer() {
+  SHOW_ALERT="${1:-true}"
+
+  if [ "$SHOW_ALERT" = "true" ]; then
+    show_admin_password_alert
+  fi
+
+  NORMAL_LIST=(
+    "rootfs/etc/firewalld/services/steam-lan-streaming.xml"
+    "rootfs/etc/firewalld/services/steam-lan-transfer.xml"
+  )
+
+  for file_path in "${NORMAL_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" false
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
+  done
+
+  # Reload firewalld to make sure it recognizes the new service
+  sudo firewall-cmd --reload
+
+  # Add the custom service to the public zone
+  sudo firewall-cmd --zone=public --add-service=steam-lan-streaming --permanent
+  sudo firewall-cmd --zone=public --add-service=steam-lan-transfer --permanent
+
+  # Reload firewalld again to apply the changes
+  sudo firewall-cmd --reload
+}
+
 configure_gamescope() {
   configure_steam
   install "gamescope" "mangoapp" "vkbasalt"
@@ -219,6 +251,10 @@ configure_steam() {
     rm -f $HOME/.local/share/Steam/steam_dev.cfg
     bash -c 'printf "@nClientDownloadEnableHTTP2PlatformLinux 0\n@fDownloadRateImprovementToAddAnotherConnection 1.0\n" > $HOME/.local/share/Steam/steam_dev.cfg'
   fi
+
+  if [$? -eq 0 ]; then
+    enable_steam_lan_transfer false
+  fi
 }
 
 configure_grub() {
@@ -270,7 +306,8 @@ RESULT=$(zenity --list --radiolist \
           TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
           FALSE grub "Hide GRUB (for quiet and optmized boot)" \
-          FALSE polkit "Configure SteamOS polkit helpers")
+          FALSE polkit "Configure SteamOS polkit helpers" \
+          FALSE steam_firewall "Steam LAN transfer over firewall")
 
 if [ -n "$RESULT" ]; then
   case $RESULT in
@@ -278,6 +315,7 @@ if [ -n "$RESULT" ]; then
     "steam") configure_steam;;
     "grub") configure_grub;;
     "polkit") configure_polkit_helpers;;
+    "steam_firewall") enable_steam_lan_transfer;;
   esac
 
   if [ $? -eq 0 ]; then
