@@ -264,7 +264,7 @@ configure_steam() {
     bash -c 'printf "@nClientDownloadEnableHTTP2PlatformLinux 0\n@fDownloadRateImprovementToAddAnotherConnection 1.0\n" > $HOME/.local/share/Steam/steam_dev.cfg'
   fi
 
-  if [$? -eq 0 ]; then
+  if [ $? -eq 0 ]; then
     enable_steam_lan_transfer false
   fi
 }
@@ -301,6 +301,53 @@ configure_grub() {
   fi
 }
 
+configure_lightdm() {
+  SHOW_ALERT="${1:-true}"
+
+  if [ "$SHOW_ALERT" = "true" ]; then
+    show_admin_password_alert
+  fi
+
+  install "lightdm"
+
+  EXECUTABLE_LIST=(
+    "rootfs/usr/bin/lightdm-session-start"
+  )
+
+  for file_path in "${EXECUTABLE_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" true
+  done
+
+  NORMAL_LIST=(
+    "rootfs/etc/lightdm/lightdm.conf.d/50-default.conf"
+    "rootfs/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
+  )
+
+  for file_path in "${NORMAL_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" false
+  done
+
+  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/lightdm
+
+  if [ $? -ne 0 ]; then
+    show_something_wrong
+    exit 1
+  fi
+
+  SYSCONFIG="etc/sysconfig/displaymanager"
+
+  # Restore the previous backup to avoid displaymanager misbehavior
+  restore_backup "$SYSCONFIG"
+  create_backup "$SYSCONFIG"
+
+  sudo sed -i "s/=.*/DISPLAYMANAGER_PASSWORD_LESS_LOGIN=\"yes\"/g" "$SYSCONFIG"
+  sudo sed -i "s/DISPLAYMANAGER=.*/DISPLAYMANAGER=\"lightdm\"/" "$SYSCONFIG" || echo "DISPLAYMANAGER=\"lightdm\"" | sudo tee -a "$SYSCONFIG"
+
+  if [ $? -eq 0 ]; then
+    ask_reboot
+  fi
+}
+
 # MAIN SECTION -----------------------------------------------------------------
 
 # Check zenity availability
@@ -315,6 +362,7 @@ RESULT=$(zenity --list --radiolist \
           TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
           FALSE grub "Hide GRUB (for quiet and optmized boot)" \
+          FALSE lightdm "Configure Lightdm on System" \
           FALSE polkit "Configure SteamOS polkit helpers" \
           FALSE steam_firewall "Steam LAN transfer over firewall")
 
@@ -323,6 +371,7 @@ if [ -n "$RESULT" ]; then
     "gamescope") configure_gamescope;;
     "steam") configure_steam;;
     "grub") configure_grub;;
+    "lightdm") configure_lightdm;;
     "polkit") configure_polkit_helpers;;
     "steam_firewall") enable_steam_lan_transfer;;
   esac

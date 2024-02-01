@@ -3,13 +3,22 @@
 USER=$(id -nu 1000)
 HOME=$(getent passwd $USER | cut -d: -f6)
 
-# SteamOS autologin SDDM config
-AUTOLOGIN_CONF="/var/lib/AccountsService/users/gamer"
+# SteamOS autologin ligthdm config
+CONF_FILE="/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
+
+# Become root
+if [[ $EUID != 0 ]]; then
+  exec pkexec "$(realpath $0)" "$session" --sentinel-created "$session_type"
+  exit 1
+fi
 
 # Configure autologin if Steam has been updated
 if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
-  sudo -Eu $USER sed -i "s/Session=.*/Session=gamescope-session/" "$AUTOLOGIN_CONF"
+  {
+    echo "[Seat:*]"
+    echo "autologin-session=gamescope-session"
+  } > "$CONF_FILE"
 fi
 
-sudo -Eu $USER gnome-session-quit --logout --no-prompt
-sudo -Eu $USER systemctl restart xdm
+gnome-session-quit --logout --no-prompt
+systemctl restart xdm
