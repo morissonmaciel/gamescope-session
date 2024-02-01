@@ -126,5 +126,5 @@ fi
 
 echo "Updated system autologin session to $session_launcher"
 systemctl reset-failed xdm
-systemctl restart  xdm
+systemctl restart xdm
 echo "Restarted XDM"

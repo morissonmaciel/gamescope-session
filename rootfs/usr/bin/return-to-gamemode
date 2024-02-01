@@ -23,3 +23,6 @@ if [[ $BASE_IMAGE_NAME = "kinoite" ]]; then
 elif [[ $BASE_IMAGE_NAME = "silverblue" ]]; then
   sudo -Eu $USER gnome-session-quit --logout --no-prompt
 fi
+
+sudo systemctl reset-failed xdm
+sudo systemctl restart xdm
