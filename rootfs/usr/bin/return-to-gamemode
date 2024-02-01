@@ -4,7 +4,7 @@ USER=$(id -nu 1000)
 HOME=$(getent passwd $USER | cut -d: -f6)
 
 # SteamOS autologin ligthdm config
-CONF_FILE="/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
+CONF_FILE="/var/lib/AccountsService/users/gamer"
 
 # Become root
 if [[ $EUID != 0 ]]; then
@@ -14,10 +14,11 @@ fi
 
 # Configure autologin if Steam has been updated
 if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
-  {
-    echo "[Seat:*]"
-    echo "autologin-session=gamescope-session"
-  } > "$CONF_FILE"
+  # {
+  #   echo "[Seat:*]"
+  #   echo "autologin-session=gamescope-session"
+  # } > "$CONF_FILE"
+  sed -i "s/\<Session\>=.*/Session=gamescope-session/g" "$CONF_FILE"
 fi
 
 gnome-session-quit --logout --no-prompt

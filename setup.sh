@@ -19,14 +19,14 @@ print() {
 }
 
 replace_or_append() {
-  TEXT="$1"
-  REPLACE="$2"
+  KEY="$1"
+  NEW_VALUE="$2"
   FILE="$3"
 
   if [ -f "$FILE" ]; then
-    sudo grep -Fq "$TEXT" "$FILE" && \
-        sudo sed -i "s/$TEXT.*/$REPLACE/g" "$FILE" || \
-          echo "$REPLACE" | sudo tee -a "$FILE"
+    sudo grep -Fq "$TEXT=" "$FILE" && \
+        sudo sed -i "s/\<$KEY\>=.*/$KEY=$NEW_VALUE/g" "$FILE" || \
+          echo "$KEY=$NEW_VALUE" | sudo tee -a "$FILE"
   fi
 }
 
@@ -63,7 +63,7 @@ restore_backup() {
     BACKUP_FILE="${FILE}.bak"
 
     if [ -f "$BACKUP_FILE" ]; then
-        print "Restorinng backup file $BACKUP_FILE for the original $FILE."
+        print "Restoring backup file $BACKUP_FILE for the original $FILE."
         sudo cp "$BACKUP_FILE" "$FILE"
     fi
 }
@@ -313,47 +313,23 @@ configure_grub() {
   fi
 }
 
-configure_lightdm() {
+configure_gdm() {
   SHOW_ALERT="${1:-true}"
 
   if [ "$SHOW_ALERT" = "true" ]; then
     show_admin_password_alert
   fi
 
-  install "lightdm"
-
-  EXECUTABLE_LIST=(
-    "rootfs/usr/bin/lightdm-session-start"
-  )
-
-  for file_path in "${EXECUTABLE_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" true
-  done
-
-  NORMAL_LIST=(
-    "rootfs/etc/lightdm/lightdm.conf.d/50-default.conf"
-    "rootfs/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
-  )
-
-  for file_path in "${NORMAL_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" false
-  done
-
-  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/lightdm
-
-  if [ $? -ne 0 ]; then
-    show_something_wrong
-    exit 1
-  fi
-
+  ACCOUNTSERVICES="/var/lib/AccountsService/users/$USER"
   SYSCONFIG="/etc/sysconfig/displaymanager"
 
   # Restore the previous backup to avoid displaymanager misbehavior
   restore_backup "$SYSCONFIG"
   create_backup "$SYSCONFIG"
 
-  replace_or_append 'DISPLAYMANAGER_PASSWORD_LESS_LOGIN=' 'DISPLAYMANAGER_PASSWORD_LESS_LOGIN="yes"' "$SYSCONFIG"
-  replace_or_append 'DISPLAYMANAGER=' 'DISPLAYMANAGER="lightdm"' "$SYSCONFIG"
+  sudo sed -i 's/\<Session\>=.*/Session=gamescope-session/g' "$ACCOUNTSERVICES"
+  sudo sed -i 's/DISPLAYMANAGER_PASSWORD_LESS_LOGIN=.*/DISPLAYMANAGER_PASSWORD_LESS_LOGIN="yes"/g' "$SYSCONFIG"
+  echo "DISPLAYMANAGER=\"gdm\"" | sudo tee -a "$SYSCONFIG"
 
   if [ $? -eq 0 ]; then
     ask_reboot
@@ -374,7 +350,7 @@ RESULT=$(zenity --list --radiolist \
           TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
           FALSE grub "Hide GRUB (for quiet and optmized boot)" \
-          FALSE lightdm "Configure Lightdm on System" \
+          FALSE gdm "Configure gdm for Gamescope Session" \
           FALSE polkit "Configure SteamOS polkit helpers" \
           FALSE steam_firewall "Steam LAN transfer over firewall")
 
@@ -383,7 +359,7 @@ if [ -n "$RESULT" ]; then
     "gamescope") configure_gamescope;;
     "steam") configure_steam;;
     "grub") configure_grub;;
-    "lightdm") configure_lightdm;;
+    "gdm") configure_gdm;;
     "polkit") configure_polkit_helpers;;
     "steam_firewall") enable_steam_lan_transfer;;
   esac

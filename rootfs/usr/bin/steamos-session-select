@@ -13,7 +13,7 @@ DESKTOP_WAYLAND=true
 BASE_IMAGE_NAME="silverblue"
 
 # File this script will modify, in addition to (potentially) the per-user sentinel file
-CONF_FILE="/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
+CONF_FILE="/var/lib/AccountsService/users/gamer"
 
 SENTINEL_FILE="steamos-session-select"
 
@@ -115,21 +115,17 @@ esac
 
 echo "Updated user selected session to $session_launcher"
 
-# # Become root
-# if [[ $EUID != 0 ]]; then
-#   exec pkexec "$(realpath $0)" "$session" --sentinel-created "$session_type"
-#   exit 1
-# fi
-
-if [[ $EUID -ne 0 ]];
-then
-    exec pkexec --disable-internal-agent "$(realpath $0)" "$@"
+# Become root
+if [[ $EUID != 0 ]]; then
+  exec pkexec "$(realpath $0)" "$session" --sentinel-created "$session_type"
+  exit 1
 fi
 
-{
-  echo "[Seat:*]"
-  echo "autologin-session=$session_launcher"
-} > "$CONF_FILE"
+# {
+#   echo "[Seat:*]"
+#   echo "autologin-session=$session_launcher"
+# } > "$CONF_FILE"
+sudo sed -i 's/\<Session\>=.*/Session=gamescope-session/g' "$CONF_FILE"
 
 echo "Updated system autologin session to $session_launcher"
 systemctl reset-failed xdm
