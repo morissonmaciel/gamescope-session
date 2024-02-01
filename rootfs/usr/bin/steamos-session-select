@@ -125,6 +125,6 @@ fi
 } > "$CONF_FILE"
 
 echo "Updated system autologin session to $session_launcher"
-systemctl reset-failed sddm
-systemctl restart sddm
-echo "Restarted SDDM"
+systemctl reset-failed xdm
+systemctl restart  xdm
+echo "Restarted XDM"

@@ -15,7 +15,7 @@ if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
   {
     echo "[Seat:*]"
     echo "autologin-session=gamescope-session"
-  } > "$AUTOLOGIN_CONF"
+  } | sudo tee "$AUTOLOGIN_CONF"
 fi
 
 if [[ $BASE_IMAGE_NAME = "kinoite" ]]; then
