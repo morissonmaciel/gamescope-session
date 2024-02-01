@@ -305,9 +305,9 @@ configure_autologin() {
     show_admin_password_alert
   fi
 
-  # Install sddm as display manager
-  install "sddm"
-  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
+  # Install lightdm as display manager
+  install "lightdm"
+  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/lightdm
 
   # Copy Autologin Service files
   EXECUTABLE_LIST=(
@@ -329,7 +329,7 @@ configure_autologin() {
 
   NORMAL_LIST=(
     "rootfs/etc/default/desktop-wayland"
-    "rootfs/etc/sddm.conf.d/steamos.conf"
+    "rootfs/etc/lightdm/lightdm.conf.d/steamos.conf"
     "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
     "rootfs/usr/share/applications/return-to-gamemode.desktop"
   )
