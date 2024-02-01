@@ -330,6 +330,7 @@ configure_autologin() {
   NORMAL_LIST=(
     "rootfs/etc/default/desktop-wayland"
     "rootfs/etc/lightdm/lightdm.conf.d/steamos.conf"
+    "rootfs/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
     "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
     "rootfs/usr/share/applications/return-to-gamemode.desktop"
   )
@@ -342,6 +343,9 @@ configure_autologin() {
       exit 1
     fi
   done
+
+  # Enabling necessary autologin service
+  sudo systemctl enable /lib/systemd/system/steamos-autologin.service
 
   if [ $? -eq 0 ]; then
     ask_reboot
