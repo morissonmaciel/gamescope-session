@@ -18,6 +18,18 @@ print() {
   echo >&2 "$MESSAGE"
 }
 
+replace_or_append() {
+  TEXT="$1"
+  REPLACE="$2"
+  FILE="$3"
+
+  if [ -f "$FILE" ]; then
+    sudo grep -Fq "$TEXT" "$FILE" && \
+        sudo sed -i "s/$TEXT.*/$REPLACE/g" "$FILE" || \
+          echo "$REPLACE" | sudo tee -a "$FILE"
+  fi
+}
+
 show_admin_password_alert() {
   zenity --info --no-wrap \
     --text="Installation process may require your administrative password. Make sure to enter it when prompted in the terminal."
@@ -282,11 +294,11 @@ configure_grub() {
 
   sudo sed -i "s/GRUB_TIMEOUT=[0-9]*/GRUB_TIMEOUT=0/g" "$GRUB_FILE"
   sudo sed -i "s/GRUB_HIDDEN_TIMEOUT=[0-9]*/GRUB_HIDDEN_TIMEOUT=0/g" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$QUIET_CMD\"/" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$OPTIMIZED_CMD\"/" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/" "$GRUB_FILE" || echo "GRUB_TIMEOUT_STYLE=hidden" | sudo tee -a "$GRUB_FILE"
-  sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/" "$GRUB_FILE" || echo "GRUB_DISABLE_SUBMENU=true" | sudo tee -a "$GRUB_FILE"
-  sudo sed -i "s/GRUB_HIDDEN_TIMEOUT_QUIET=.*/GRUB_HIDDEN_TIMEOUT_QUIET=true/" "$GRUB_FILE" || echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" | sudo tee -a "$GRUB_FILE"
+  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$QUIET_CMD\"/g" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$OPTIMIZED_CMD\"/g" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/g" "$GRUB_FILE" || echo "GRUB_TIMEOUT_STYLE=hidden" | sudo tee -a "$GRUB_FILE"
+  sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/g" "$GRUB_FILE" || echo "GRUB_DISABLE_SUBMENU=true" | sudo tee -a "$GRUB_FILE"
+  sudo sed -i "s/GRUB_HIDDEN_TIMEOUT_QUIET=.*/GRUB_HIDDEN_TIMEOUT_QUIET=true/g" "$GRUB_FILE" || echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" | sudo tee -a "$GRUB_FILE"
 
   # Update grub manually
   sudo grub2-mkconfig -o /boot/grub2/grub.cfg
@@ -334,14 +346,14 @@ configure_lightdm() {
     exit 1
   fi
 
-  SYSCONFIG="etc/sysconfig/displaymanager"
+  SYSCONFIG="/etc/sysconfig/displaymanager"
 
   # Restore the previous backup to avoid displaymanager misbehavior
   restore_backup "$SYSCONFIG"
   create_backup "$SYSCONFIG"
 
-  sudo sed -i "s/=.*/DISPLAYMANAGER_PASSWORD_LESS_LOGIN=\"yes\"/g" "$SYSCONFIG"
-  sudo sed -i "s/DISPLAYMANAGER=.*/DISPLAYMANAGER=\"lightdm\"/" "$SYSCONFIG" || echo "DISPLAYMANAGER=\"lightdm\"" | sudo tee -a "$SYSCONFIG"
+  replace_or_append 'DISPLAYMANAGER_PASSWORD_LESS_LOGIN=' 'DISPLAYMANAGER_PASSWORD_LESS_LOGIN="yes"' "$SYSCONFIG"
+  replace_or_append 'DISPLAYMANAGER=' 'DISPLAYMANAGER="lightdm"' "$SYSCONFIG"
 
   if [ $? -eq 0 ]; then
     ask_reboot
