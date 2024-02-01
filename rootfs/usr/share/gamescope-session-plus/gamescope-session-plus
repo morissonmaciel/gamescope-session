@@ -321,7 +321,7 @@ if [[ -e "$SHUTDOWN_SENTINEL" ]]; then
 	rm -f "$SHUTDOWN_SENTINEL"
 	# rearm short session tracker
 	rm "$short_session_tracker_file"
-	poweroff
+	shutdown
 fi
 
 # Wait for gamescope or the sleep to finish for timeout purposes

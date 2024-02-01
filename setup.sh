@@ -214,7 +214,7 @@ configure_polkit_helpers() {
   done
 
   NORMAL_LIST=(
-    "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules"
+    "rootfs/usr/share/polkit-1/rules.d/10-rebase.rules"
     "rootfs/usr/share/polkit-1/actions/org.gamescopesession.host.policy"
   )
 
