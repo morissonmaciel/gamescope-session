@@ -10,19 +10,22 @@ HOME=$(getent passwd $USER | cut -d: -f6)
 # SteamOS autologin LIGHTDM config
 AUTOLOGIN_CONF="/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
 
-# Configure autologin if Steam has been updated
-if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
-  {
-    echo "[Seat:*]"
-    echo "autologin-session=gamescope-session"
-  } > "$AUTOLOGIN_CONF"
+if [[ $EUID -ne 0 ]];
+then
+    exec pkexec --disable-internal-agent "$(realpath $0)" "$@"
 fi
+
+# Configure autologin if Steam has been updated
+{
+  echo "[Seat:*]"
+  echo "autologin-session=gamescope-session"
+} > "$AUTOLOGIN_CONF"
 
 if [[ $BASE_IMAGE_NAME = "kinoite" ]]; then
-  sudo -Eu $USER qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
+    qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
 elif [[ $BASE_IMAGE_NAME = "silverblue" ]]; then
-  sudo -Eu $USER gnome-session-quit --logout --no-prompt
+    gnome-session-quit --logout --no-prompt
 fi
 
-sudo systemctl reset-failed xdm
-sudo systemctl restart xdm
+systemctl reset-failed xdm
+systemctl restart xdm
