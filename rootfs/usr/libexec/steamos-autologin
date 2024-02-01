@@ -1,43 +1,15 @@
 #!/usr/bin/bash
 
-source /etc/default/desktop-wayland
-
-# IMAGE_INFO="/usr/share/ublue-os/image-info.json"
-# BASE_IMAGE_NAME=$(jq -r '."base-image-name"' < $IMAGE_INFO)
-BASE_IMAGE_NAME="silverblue"
-
 USER=$(id -nu 1000)
 HOME=$(getent passwd $USER | cut -d: -f6)
 
 # SteamOS LIUGHTDM config
 LIGHTDM_CONF='/etc/lightdm/lightdm.conf.d/steamos.conf'
 AUTOLOGIN_CONF='/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf'
-# DESKTOP_AUTOLOGIN='/etc/bazzite/desktop_autologin'
 
 {
   echo "[Seat:*]"
   echo "autologin-session=gamescope-session"
 } > "$AUTOLOGIN_CONF"
 
-# Avoid autologin conflict
-# if [[ -f ${AUTOLOGIN_CONF} ]]; then
-#   rm -f ${AUTOLOGIN_CONF}
-# fi
-
-# Configure autologin if Steam has been updated
-# if [[ ! -f ${DESKTOP_AUTOLOGIN} && -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
-#   sed -i 's/.*autologin-session=.*/autologin-session=gamescope-session/g' ${LIGHTDM_CONF}
-# elif [[ ${BASE_IMAGE_NAME} =~ "kinoite" ]]; then
-#   if ${DESKTOP_WAYLAND}; then
-#     sed -i 's/.*autologin-session=.*/autologin-session=plasma/g' ${LIGHTDM_CONF}
-#   else
-#     sed -i 's/.*autologin-session=.*/autologin-session=plasmax11/g' ${LIGHTDM_CONF}
-#   fi
-# elif [[ ${BASE_IMAGE_NAME} =~ "silverblue" ]]; then
-#   if ${DESKTOP_WAYLAND}; then
-#     sed -i 's/.*autologin-session=.*/autologin-session=gnome-wayland/g' ${LIGHTDM_CONF}
-#   else
-#     sed -i 's/.*autologin-session=.*/autologin-session=gnome-xorg/g' ${LIGHTDM_CONF}
-#   fi
-# fi
 sed -i 's/.*autologin-user=.*/autologin-user='${USER}'/g' ${LIGHTDM_CONF}
