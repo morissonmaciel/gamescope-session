@@ -2,17 +2,6 @@
 
 # set -e
 
-configure_xdm() {
-  XDM_CONF_FILE="/var/lib/AccountsService/users/gamer"
-
-  {
-    echo "[User]"
-    echo "Session=gamescope-session"
-    echo "Icon=/home/gamer/.face"
-    echo "SystemAccount=false"
-  } | sudo tee "$XDM_CONF_FILE"
-}
-
 print() {
   MESSAGE="$1"
   echo >&2 "$MESSAGE"
@@ -152,10 +141,7 @@ configure_gamescope() {
     "rootfs/lib/systemd/user/gamescope-session-plus@.service"
     "rootfs/usr/bin/export-gpu"
     "rootfs/usr/bin/gamescope-session-plus"
-    "rootfs/usr/bin/gnome-session-oneshot"
-    "rootfs/usr/bin/return-to-gamemode"
     "rootfs/usr/bin/steamos-select-branch"
-    "rootfs/usr/bin/steamos-session-select"
     "rootfs/usr/share/gamescope-session-plus/gamescope-session-plus"
     "rootfs/usr/share/gamescope-session-plus/sessions.d/steam"
     "rootfs/usr/share/gamescope-session-plus/device-quirks"
@@ -163,8 +149,6 @@ configure_gamescope() {
 
   NORMAL_LIST=(
     "rootfs/usr/share/wayland-sessions/gamescope-session.desktop"
-    "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
-    "rootfs/usr/share/applications/return-to-gamemode.desktop"
   )
 
   for file_path in "${EXECUTABLE_LIST[@]}"; do
@@ -213,6 +197,7 @@ configure_polkit_helpers() {
     "rootfs/usr/bin/steamos-polkit-helpers/jupiter-dock-updater"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-poweroff-now"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-reboot-now"
+    "rootfs/usr/bin/steamos-polkit-helpers/steamos-restart-sddm"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-select-branch"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-hostname"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-timezone"
@@ -229,7 +214,7 @@ configure_polkit_helpers() {
   done
 
   NORMAL_LIST=(
-    "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules",
+    "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules"
     "rootfs/usr/share/polkit-1/actions/org.gamescopesession.host.policy"
   )
 
@@ -313,23 +298,50 @@ configure_grub() {
   fi
 }
 
-configure_gdm() {
+configure_autologin() {
   SHOW_ALERT="${1:-true}"
 
   if [ "$SHOW_ALERT" = "true" ]; then
     show_admin_password_alert
   fi
 
-  ACCOUNTSERVICES="/var/lib/AccountsService/users/$USER"
-  SYSCONFIG="/etc/sysconfig/displaymanager"
+  # Install sddm as display manager
+  install "sddm"
+  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
 
-  # Restore the previous backup to avoid displaymanager misbehavior
-  restore_backup "$SYSCONFIG"
-  create_backup "$SYSCONFIG"
+  # Copy Autologin Service files
+  EXECUTABLE_LIST=(
+    "rootfs/lib/systemd/system/steamos-autologin.service"
+    "rootfs/usr/libexec/steamos-autologin"
+    "rootfs/usr/bin/gnome-session-oneshot"
+    "rootfs/usr/bin/return-to-gamemode"
+    "rootfs/usr/bin/steamos-session-select"
+  )
 
-  sudo sed -i 's/\<Session\>=.*/Session=gamescope-session/g' "$ACCOUNTSERVICES"
-  sudo sed -i 's/DISPLAYMANAGER_PASSWORD_LESS_LOGIN=.*/DISPLAYMANAGER_PASSWORD_LESS_LOGIN="yes"/g' "$SYSCONFIG"
-  echo "DISPLAYMANAGER=\"gdm\"" | sudo tee -a "$SYSCONFIG"
+  for file_path in "${EXECUTABLE_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" true
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
+  done
+
+  NORMAL_LIST=(
+    "rootfs/etc/default/desktop-wayland"
+    "rootfs/etc/sddm.conf.d/steamos.conf"
+    "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
+    "rootfs/usr/share/applications/return-to-gamemode.desktop"
+  )
+
+  for file_path in "${NORMAL_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" false
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
+  done
 
   if [ $? -eq 0 ]; then
     ask_reboot
@@ -350,7 +362,7 @@ RESULT=$(zenity --list --radiolist \
           TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
           FALSE grub "Hide GRUB (for quiet and optmized boot)" \
-          FALSE gdm "Configure gdm for Gamescope Session" \
+          FALSE autologin "Configure autologin for Gamescope Session" \
           FALSE polkit "Configure SteamOS polkit helpers" \
           FALSE steam_firewall "Steam LAN transfer over firewall")
 
@@ -359,7 +371,7 @@ if [ -n "$RESULT" ]; then
     "gamescope") configure_gamescope;;
     "steam") configure_steam;;
     "grub") configure_grub;;
-    "gdm") configure_gdm;;
+    "autologin") configure_autologin;;
     "polkit") configure_polkit_helpers;;
     "steam_firewall") enable_steam_lan_transfer;;
   esac
