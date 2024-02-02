@@ -141,6 +141,7 @@ configure_gamescope() {
     "rootfs/lib/systemd/user/gamescope-session-plus@.service"
     "rootfs/usr/bin/export-gpu"
     "rootfs/usr/bin/gamescope-session-plus"
+    "rootfs/usr/bin/steamos-restart-sddm"
     "rootfs/usr/bin/steamos-select-branch"
     "rootfs/usr/share/gamescope-session-plus/gamescope-session-plus"
     "rootfs/usr/share/gamescope-session-plus/sessions.d/steam"
@@ -214,7 +215,7 @@ configure_polkit_helpers() {
   done
 
   NORMAL_LIST=(
-    "rootfs/usr/share/polkit-1/rules.d/10-rebase.rules"
+    "rootfs/etc/polkit-1/rules.d/10-rebase.rules"
     "rootfs/usr/share/polkit-1/actions/org.gamescopesession.host.policy"
   )
 
