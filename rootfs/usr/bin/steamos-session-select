@@ -11,12 +11,12 @@ source /etc/default/desktop-wayland
 BASE_IMAGE_NAME="silverblue"
 
 # File this script will modify, in addition to (potentially) the per-user sentinel file
-CONF_FILE="/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
+CONF_FILE="/etc/sddm.conf.d/zz-steamos-autologin.conf"
 
 SENTINEL_FILE="steamos-session-select"
 
 # For sanity this shipped file must be present, to ensure we're still on a normal-looking steamos setup.
-CHECK_FILE="/etc/lightdm/lightdm.conf.d/steamos.conf"
+CHECK_FILE="/etc/sddm.conf.d/steamos.conf"
 
 session="${1:-gamescope}"
 if ${DESKTOP_WAYLAND}; then
@@ -73,36 +73,36 @@ fi
 case "$session" in
   plasma-wayland-persistent)
     if [[ ${BASE_IMAGE_NAME} == 'kinoite' ]]; then
-      session_launcher="plasma"
+      session_launcher="plasma.desktop"
     elif [[ ${BASE_IMAGE_NAME} == 'silverblue' ]]; then
-      session_launcher="gnome-wayland"
+      session_launcher="gnome-wayland.desktop"
     fi
   ;;
   plasma-x11-persistent)
     if [[ ${BASE_IMAGE_NAME} == 'kinoite' ]]; then
-      session_launcher="plasmax11"
+      session_launcher="plasmax11.desktop"
     elif [[ ${BASE_IMAGE_NAME} == 'silverblue' ]]; then
-      session_launcher="gnome-xorg"
+      session_launcher="gnome-xorg.desktop"
     fi
   ;;
   desktop|plasma)
     if [[ ${BASE_IMAGE_NAME} == 'kinoite' ]]; then
       if ${DESKTOP_WAYLAND}; then
-        session_launcher="plasma-steamos-wayland-oneshot"
+        session_launcher="plasma-steamos-wayland-oneshot.desktop"
       else
-        session_launcher="plasma-steamos-oneshot"
+        session_launcher="plasma-steamos-oneshot.desktop"
       fi
     elif [[ ${BASE_IMAGE_NAME} == 'silverblue' ]]; then
       if ${DESKTOP_WAYLAND}; then
-        session_launcher="gnome-wayland-oneshot"
+        session_launcher="gnome-wayland-oneshot.desktop"
       else
-        session_launcher="gnome-xorg-oneshot"
+        session_launcher="gnome-xorg-oneshot.desktop"
       fi
     fi
     create_sentinel=1
   ;;
   gamescope)
-    session_launcher="gamescope-session"
+    session_launcher="gamescope-session.desktop"
     create_sentinel=1
   ;;
   *)
@@ -120,11 +120,11 @@ if [[ $EUID != 0 ]]; then
 fi
 
 {
-  echo "[Seat:*]"
-  echo "autologin-session=$session_launcher"
+  echo "[Autologin]"
+  echo "Session=$session_launcher"
 } > "$CONF_FILE"
 
 echo "Updated system autologin session to $session_launcher"
 systemctl reset-failed xdm
 systemctl restart xdm
-echo "Restarted XDM"
+echo "Restarted SDDM"

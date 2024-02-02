@@ -7,4 +7,4 @@ then
     exec pkexec --disable-internal-agent "$(realpath $0)" "$@"
 fi
 
-shutdown
+poweroff

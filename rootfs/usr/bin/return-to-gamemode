@@ -7,25 +7,19 @@ BASE_IMAGE_NAME="silverblue"
 USER=$(id -nu 1000)
 HOME=$(getent passwd $USER | cut -d: -f6)
 
-# SteamOS autologin LIGHTDM config
-AUTOLOGIN_CONF="/etc/lightdm/lightdm.conf.d/zz-steamos-autologin.conf"
-
-if [[ $EUID -ne 0 ]];
-then
-    exec pkexec --disable-internal-agent "$(realpath $0)" "$@"
-fi
+# SteamOS autologin SDDM config
+AUTOLOGIN_CONF='/etc/sddm.conf.d/zz-steamos-autologin.conf'
 
 # Configure autologin if Steam has been updated
-{
-  echo "[Seat:*]"
-  echo "autologin-session=gamescope-session"
-} > "$AUTOLOGIN_CONF"
-
-if [[ $BASE_IMAGE_NAME = "kinoite" ]]; then
-    qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
-elif [[ $BASE_IMAGE_NAME = "silverblue" ]]; then
-    gnome-session-quit --logout --no-prompt
+if [[ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
+  {
+    echo "[Autologin]"
+    echo "Session=gamescope-session.desktop"
+  } > "$AUTOLOGIN_CONF"
 fi
 
-systemctl reset-failed xdm
-systemctl restart xdm
+if [[ $BASE_IMAGE_NAME = "kinoite" ]]; then
+  sudo -Eu $USER qdbus org.kde.Shutdown /Shutdown org.kde.Shutdown.logout
+elif [[ $BASE_IMAGE_NAME = "silverblue" ]]; then
+  sudo -Eu $USER gnome-session-quit --logout --no-prompt
+fi
