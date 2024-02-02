@@ -264,6 +264,10 @@ configure_steam() {
   if [ $? -eq 0 ]; then
     enable_steam_lan_transfer false
   fi
+
+  # create symbolic link for Steam auto start
+  cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
+  chmod +x "$HOME/.config/autostart/Steam.desktop"
 }
 
 configure_grub() {
