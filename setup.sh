@@ -305,7 +305,7 @@ configure_autostart() {
     show_admin_password_alert
   fi
 
-  # Install lightdm as display manager
+  # Install SDDM as display manager
   install "sddm"
   sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
 
