@@ -264,10 +264,6 @@ configure_steam() {
   if [ $? -eq 0 ]; then
     enable_steam_lan_transfer false
   fi
-
-  # create symbolic link for Steam auto start
-  cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
-  chmod +x "$HOME/.config/autostart/Steam.desktop"
 }
 
 configure_grub() {
@@ -302,7 +298,7 @@ configure_grub() {
   fi
 }
 
-configure_autologin() {
+configure_autostart() {
   SHOW_ALERT="${1:-true}"
 
   if [ "$SHOW_ALERT" = "true" ]; then
@@ -350,6 +346,10 @@ configure_autologin() {
   # Enabling necessary autologin service
   sudo systemctl enable /lib/systemd/system/steamos-autologin.service
 
+  # create symbolic link for Steam auto start
+  cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
+  chmod +x "$HOME/.config/autostart/Steam.desktop"
+
   if [ $? -eq 0 ]; then
     ask_reboot
   fi
@@ -369,7 +369,7 @@ RESULT=$(zenity --list --radiolist \
           TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
           FALSE grub "Hide GRUB (for quiet and optmized boot)" \
-          FALSE autologin "Configure autologin for Gamescope Session" \
+          FALSE autostart "Configure autostart for Gamescope Session / Steam on Desktop" \
           FALSE polkit "Configure SteamOS polkit helpers" \
           FALSE steam_firewall "Steam LAN transfer over firewall")
 
@@ -378,7 +378,7 @@ if [ -n "$RESULT" ]; then
     "gamescope") configure_gamescope;;
     "steam") configure_steam;;
     "grub") configure_grub;;
-    "autologin") configure_autologin;;
+    "autostart") configure_autostart;;
     "polkit") configure_polkit_helpers;;
     "steam_firewall") enable_steam_lan_transfer;;
   esac
