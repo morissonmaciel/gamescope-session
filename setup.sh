@@ -215,8 +215,9 @@ configure_polkit_helpers() {
   done
 
   NORMAL_LIST=(
-    "rootfs/etc/polkit-1/rules.d/10-rebase.rules"
-    "rootfs/usr/share/polkit-1/actions/org.gamescopesession.host.policy"
+    "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules"
+    "rootfs/usr/share/polkit-1/actions/org.valve.steamos.policy"
+    "rootfs/usr/share/polkit-1/rules.d/org.valve.steamos.rules"
   )
 
   for file_path in "${NORMAL_LIST[@]}"; do
@@ -227,10 +228,6 @@ configure_polkit_helpers() {
       exit 1
     fi
   done
-
-  DELETED=(
-    "rootfs/usr/share/polkit-1/actions/org.gamescopesession.session.select.policy"
-  )
 
   for file_path in "${DELETED[@]}"; do
     if [ -f file_path ]; then
