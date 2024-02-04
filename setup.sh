@@ -171,7 +171,8 @@ configure_gamescope() {
   done
 
   # Copying files from special folders
-  copy_local "rootfs/home/config/environment.d/10-gamescope-session-custom.conf" \
+  mkdir -p "$( dirname "$HOME/.config/environment.d/10-gamescope-session-custom.conf" )"
+  cp "rootfs/home/config/environment.d/10-gamescope-session-custom.conf" \
     "$HOME/.config/environment.d/10-gamescope-session-custom.conf"
 
   # Configure polkit rules and actions once it is needed by SteamOS
