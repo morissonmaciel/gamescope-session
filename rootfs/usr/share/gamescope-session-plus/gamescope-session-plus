@@ -315,13 +315,13 @@ if [[ -e "$REBOOT_SENTINEL" ]]; then
 	rm -f "$REBOOT_SENTINEL"
 	# rearm short session tracker
 	rm "$short_session_tracker_file"
-	reboot
+	systemctl reboot
 fi
 if [[ -e "$SHUTDOWN_SENTINEL" ]]; then
 	rm -f "$SHUTDOWN_SENTINEL"
 	# rearm short session tracker
 	rm "$short_session_tracker_file"
-	shutdown
+	systemctl poweroff
 fi
 
 # Wait for gamescope or the sleep to finish for timeout purposes

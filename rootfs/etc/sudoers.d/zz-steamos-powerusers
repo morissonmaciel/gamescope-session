@@ -1,0 +1,4 @@
+User_Alias	STEAMOS_POWERGROUP = username
+
+Cmnd_Alias	POWER = /sbin/shutdown, /sbin/halt, /sbin/reboot, /sbin/restart
+STEAMOS_POWERGROUP	ALL = POWER

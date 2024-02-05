@@ -329,6 +329,7 @@ configure_autostart() {
   NORMAL_LIST=(
     "rootfs/etc/default/desktop-wayland"
     "rootfs/etc/sddm.conf.d/steamos.conf"
+    "rootfs/etc/sudoers.d/zz-steamos-powerusers"
     "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
     "rootfs/usr/share/applications/return-to-gamemode.desktop"
   )
@@ -341,6 +342,9 @@ configure_autostart() {
       exit 1
     fi
   done
+
+  # Attrib current user (which will run Gamescope session) to Power Users
+  sudo sed -i "s/username/$USER/g" "/etc/sudoers.d/zz-steamos-powerusers"
 
   # Enabling necessary autologin service
   sudo systemctl enable /lib/systemd/system/steamos-autologin.service
