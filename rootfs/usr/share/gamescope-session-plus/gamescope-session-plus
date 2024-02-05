@@ -5,8 +5,8 @@ declare -r CLIENT_CONFIG_DIR_USR=/usr/share/gamescope-session-plus/sessions.d
 declare -r CLIENT_CONFIG_DIR_ETC=/etc/gamescope-session-plus/sessions.d
 declare -r CLIENT_CONFIG_DIR_LOCAL="${XDG_CONFIG_HOME:-$HOME/.config}/gamescope-session-plus/sessions.d"
 
-IMAGE_INFO="/usr/share/ublue-os/image-info.json"
-BASE_IMAGE_NAME=$(jq -r '."base-image-name"' < $IMAGE_INFO)
+#IMAGE_INFO="/usr/share/ublue-os/image-info.json"
+#BASE_IMAGE_NAME=$(jq -r '."base-image-name"' < $IMAGE_INFO)
 BASE_IMAGE_NAME="silverblue"
 
 # Reset System76-Scheduler Foreground Process
@@ -211,12 +211,15 @@ else
 fi
 
 # Attempt to fallback to a desktop session if something goes wrong too many times
-short_session_tracker_file="/tmp/chimeraos-short-session-tracker"
+short_session_tracker_file="/tmp/gamescope-short-session-tracker"
 short_session_duration=60
+short_session_count=0
 short_session_count_before_reset=3
 SECONDS=0
 
-short_session_count=$(< "$short_session_tracker_file" wc -l)
+if [ -f "$short_session_tracker_file" ]; then
+    short_session_count=$(< "$short_session_tracker_file" wc -l)
+fi
 
 if [[ "$short_session_count" -ge "$short_session_count_before_reset" ]]; then
     echo >&2 "gamescope-session-plus: detected broken ${CLIENT} or gamescope failure, will try to reset the session"
@@ -312,13 +315,13 @@ if [[ -e "$REBOOT_SENTINEL" ]]; then
 	rm -f "$REBOOT_SENTINEL"
 	# rearm short session tracker
 	rm "$short_session_tracker_file"
-	reboot
+	systemctl reboot
 fi
 if [[ -e "$SHUTDOWN_SENTINEL" ]]; then
 	rm -f "$SHUTDOWN_SENTINEL"
 	# rearm short session tracker
 	rm "$short_session_tracker_file"
-	poweroff
+	systemctl poweroff
 fi
 
 # Wait for gamescope or the sleep to finish for timeout purposes

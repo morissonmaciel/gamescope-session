@@ -2,20 +2,21 @@
 
 # set -e
 
-configure_xdm() {
-  XDM_CONF_FILE="/var/lib/AccountsService/users/gamer"
-
-  {
-    echo "[User]"
-    echo "Session=gamescope-session"
-    echo "Icon=/home/gamer/.face"
-    echo "SystemAccount=false"
-  } | sudo tee "$XDM_CONF_FILE"
-}
-
 print() {
   MESSAGE="$1"
   echo >&2 "$MESSAGE"
+}
+
+replace_or_append() {
+  KEY="$1"
+  NEW_VALUE="$2"
+  FILE="$3"
+
+  if [ -f "$FILE" ]; then
+    sudo grep -Fq "$TEXT=" "$FILE" && \
+        sudo sed -i "s/\<$KEY\>=.*/$KEY=$NEW_VALUE/g" "$FILE" || \
+          echo "$KEY=$NEW_VALUE" | sudo tee -a "$FILE"
+  fi
 }
 
 show_admin_password_alert() {
@@ -51,7 +52,7 @@ restore_backup() {
     BACKUP_FILE="${FILE}.bak"
 
     if [ -f "$BACKUP_FILE" ]; then
-        print "Restorinng backup file $BACKUP_FILE for the original $FILE."
+        print "Restoring backup file $BACKUP_FILE for the original $FILE."
         sudo cp "$BACKUP_FILE" "$FILE"
     fi
 }
@@ -140,8 +141,8 @@ configure_gamescope() {
     "rootfs/lib/systemd/user/gamescope-session-plus@.service"
     "rootfs/usr/bin/export-gpu"
     "rootfs/usr/bin/gamescope-session-plus"
-    "rootfs/usr/bin/return-to-gamemode"
-    "rootfs/usr/bin/steam-os-select-branch"
+    "rootfs/usr/bin/steamos-restart-sddm"
+    "rootfs/usr/bin/steamos-select-branch"
     "rootfs/usr/share/gamescope-session-plus/gamescope-session-plus"
     "rootfs/usr/share/gamescope-session-plus/sessions.d/steam"
     "rootfs/usr/share/gamescope-session-plus/device-quirks"
@@ -149,7 +150,6 @@ configure_gamescope() {
 
   NORMAL_LIST=(
     "rootfs/usr/share/wayland-sessions/gamescope-session.desktop"
-    "rootfs/usr/share/applications/return-to-gamemode.desktop"
   )
 
   for file_path in "${EXECUTABLE_LIST[@]}"; do
@@ -171,7 +171,8 @@ configure_gamescope() {
   done
 
   # Copying files from special folders
-  copy_local "rootfs/home/config/environment.d/10-gamescope-session-custom.conf" \
+  mkdir -p "$( dirname "$HOME/.config/environment.d/10-gamescope-session-custom.conf" )"
+  cp "rootfs/home/config/environment.d/10-gamescope-session-custom.conf" \
     "$HOME/.config/environment.d/10-gamescope-session-custom.conf"
 
   # Configure polkit rules and actions once it is needed by SteamOS
@@ -198,6 +199,7 @@ configure_polkit_helpers() {
     "rootfs/usr/bin/steamos-polkit-helpers/jupiter-dock-updater"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-poweroff-now"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-reboot-now"
+    "rootfs/usr/bin/steamos-polkit-helpers/steamos-restart-sddm"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-select-branch"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-hostname"
     "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-timezone"
@@ -214,9 +216,9 @@ configure_polkit_helpers() {
   done
 
   NORMAL_LIST=(
-    "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules",
-    "rootfs/usr/share/polkit-1/actions/org.gamescopesession.host.policy"
-    "rootfs/usr/share/polkit-1/actions/org.gamescopesession.session.select.policy"
+    "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules"
+    "rootfs/usr/share/polkit-1/actions/org.valve.steamos.policy"
+    "rootfs/usr/share/polkit-1/rules.d/org.valve.steamos.rules"
   )
 
   for file_path in "${NORMAL_LIST[@]}"; do
@@ -225,6 +227,12 @@ configure_polkit_helpers() {
     if [ $? -ne 0 ]; then
       show_something_wrong
       exit 1
+    fi
+  done
+
+  for file_path in "${DELETED[@]}"; do
+    if [ -f file_path ]; then
+      sudo rm -rf "${file_path/rootfs/}"
     fi
   done
 }
@@ -252,7 +260,7 @@ configure_steam() {
     bash -c 'printf "@nClientDownloadEnableHTTP2PlatformLinux 0\n@fDownloadRateImprovementToAddAnotherConnection 1.0\n" > $HOME/.local/share/Steam/steam_dev.cfg'
   fi
 
-  if [$? -eq 0 ]; then
+  if [ $? -eq 0 ]; then
     enable_steam_lan_transfer false
   fi
 }
@@ -270,11 +278,11 @@ configure_grub() {
 
   sudo sed -i "s/GRUB_TIMEOUT=[0-9]*/GRUB_TIMEOUT=0/g" "$GRUB_FILE"
   sudo sed -i "s/GRUB_HIDDEN_TIMEOUT=[0-9]*/GRUB_HIDDEN_TIMEOUT=0/g" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$QUIET_CMD\"/" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$OPTIMIZED_CMD\"/" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/" "$GRUB_FILE" || echo "GRUB_TIMEOUT_STYLE=hidden" | sudo tee -a "$GRUB_FILE"
-  sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/" "$GRUB_FILE" || echo "GRUB_DISABLE_SUBMENU=true" | sudo tee -a "$GRUB_FILE"
-  sudo sed -i "s/GRUB_HIDDEN_TIMEOUT_QUIET=.*/GRUB_HIDDEN_TIMEOUT_QUIET=true/" "$GRUB_FILE" || echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" | sudo tee -a "$GRUB_FILE"
+  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$QUIET_CMD\"/g" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$OPTIMIZED_CMD\"/g" "$GRUB_FILE"
+  sudo sed -i "s/GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/g" "$GRUB_FILE" || echo "GRUB_TIMEOUT_STYLE=hidden" | sudo tee -a "$GRUB_FILE"
+  sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/g" "$GRUB_FILE" || echo "GRUB_DISABLE_SUBMENU=true" | sudo tee -a "$GRUB_FILE"
+  sudo sed -i "s/GRUB_HIDDEN_TIMEOUT_QUIET=.*/GRUB_HIDDEN_TIMEOUT_QUIET=true/g" "$GRUB_FILE" || echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" | sudo tee -a "$GRUB_FILE"
 
   # Update grub manually
   sudo grub2-mkconfig -o /boot/grub2/grub.cfg
@@ -283,6 +291,67 @@ configure_grub() {
     show_something_wrong
     exit 1
   fi
+
+  if [ $? -eq 0 ]; then
+    ask_reboot
+  fi
+}
+
+configure_autostart() {
+  SHOW_ALERT="${1:-true}"
+
+  if [ "$SHOW_ALERT" = "true" ]; then
+    show_admin_password_alert
+  fi
+
+  # Install SDDM as display manager
+  install "sddm"
+  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
+
+  # Copy Autologin Service files
+  EXECUTABLE_LIST=(
+    "rootfs/lib/systemd/system/steamos-autologin.service"
+    "rootfs/usr/libexec/steamos-autologin"
+    "rootfs/usr/bin/gnome-session-oneshot"
+    "rootfs/usr/bin/return-to-gamemode"
+    "rootfs/usr/bin/steamos-session-select"
+  )
+
+  for file_path in "${EXECUTABLE_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" true
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
+  done
+
+  NORMAL_LIST=(
+    "rootfs/etc/default/desktop-wayland"
+    "rootfs/etc/sddm.conf.d/steamos.conf"
+    "rootfs/etc/sudoers.d/zz-steamos-powerusers"
+    "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
+    "rootfs/usr/share/applications/return-to-gamemode.desktop"
+  )
+
+  for file_path in "${NORMAL_LIST[@]}"; do
+    copy_local "$file_path" "${file_path/rootfs/}" false
+
+    if [ $? -ne 0 ]; then
+      show_something_wrong
+      exit 1
+    fi
+  done
+
+  # Attrib current user (which will run Gamescope session) to Power Users
+  sudo sed -i "s/username/$USER/g" "/etc/sudoers.d/zz-steamos-powerusers"
+
+  # Enabling necessary autologin service
+  sudo systemctl enable /lib/systemd/system/steamos-autologin.service
+
+  # create symbolic link for Steam auto start
+  cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
+  chmod +x "$HOME/.config/autostart/Steam.desktop"
 
   if [ $? -eq 0 ]; then
     ask_reboot
@@ -303,6 +372,7 @@ RESULT=$(zenity --list --radiolist \
           TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
           FALSE steam "Install and configure standalone Steam" \
           FALSE grub "Hide GRUB (for quiet and optmized boot)" \
+          FALSE autostart "Configure autostart for Gamescope Session / Steam on Desktop" \
           FALSE polkit "Configure SteamOS polkit helpers" \
           FALSE steam_firewall "Steam LAN transfer over firewall")
 
@@ -311,6 +381,7 @@ if [ -n "$RESULT" ]; then
     "gamescope") configure_gamescope;;
     "steam") configure_steam;;
     "grub") configure_grub;;
+    "autostart") configure_autostart;;
     "polkit") configure_polkit_helpers;;
     "steam_firewall") enable_steam_lan_transfer;;
   esac

@@ -1,13 +1,15 @@
-/* Allow members of the wheel group to execute the defined actions
- * without password authentication, similar to "sudo NOPASSWD:"
- */
- 
 polkit.addRule(function(action, subject) {
-	if ((action.id == "org.freedesktop.timedate1.set-time" ||
-	     action.id == "org.freedesktop.timedate1.set-timezone" ||
-	     action.id == "org.freedesktop.login1.power-off" ||
-	     action.id == "org.freedesktop.login1.reboot") &&
-	     subject.isInGroup("wheel")) {
+    if ((action.id == "org.freedesktop.timedate1.set-time" ||
+         action.id == "org.freedesktop.timedate1.set-timezone" ||
+         action.id == "org.freedesktop.login1.reboot" ||
+         action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+         action.id == "org.freedesktop.login1.power-off" ||
+         action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+         action.id == "org.freedesktop.login1.suspend" ||
+         action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+         action.id == "org.freedesktop.login1.hibernate" ||
+         action.id == "org.freedesktop.login1.hibernate-multiple-sessions") &&
+         subject.isInGroup("wheel")) {
 		return polkit.Result.YES;
 	}
 });
