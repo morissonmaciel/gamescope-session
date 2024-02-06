@@ -141,6 +141,7 @@ configure_gamescope() {
     "rootfs/lib/systemd/user/gamescope-session-plus@.service"
     "rootfs/usr/bin/export-gpu"
     "rootfs/usr/bin/gamescope-session-plus"
+    "rootfs/usr/bin/steam-http-loader"
     "rootfs/usr/bin/steamos-restart-sddm"
     "rootfs/usr/bin/steamos-select-branch"
     "rootfs/usr/share/gamescope-session-plus/gamescope-session-plus"
@@ -358,6 +359,35 @@ configure_autostart() {
   fi
 }
 
+configure_decky_loader() {
+  SHOW_ALERT="${1:-true}"
+
+  if [ "$SHOW_ALERT" = "true" ]; then
+    show_admin_password_alert
+  fi
+
+  # Assuring git
+  if ! command -v git > /dev/null; then
+    echo; echo "Installing git core on system..."
+    install "git-core"
+  fi
+
+  # Assuring homebrew
+  if ! command -v brew > /dev/null; then
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> "$HOME/.bashrc"
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  fi
+
+  # Installing Decky loader
+  if ! command -v jq > /dev/null; then
+    install "jq"
+  fi
+
+  # Finally installing Decky Loader
+  curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install_release.sh | sh
+}
+
 # MAIN SECTION -----------------------------------------------------------------
 
 # Check zenity availability
@@ -374,7 +404,8 @@ RESULT=$(zenity --list --radiolist \
           FALSE grub "Hide GRUB (for quiet and optmized boot)" \
           FALSE autostart "Configure autostart for Gamescope Session / Steam on Desktop" \
           FALSE polkit "Configure SteamOS polkit helpers" \
-          FALSE steam_firewall "Steam LAN transfer over firewall")
+          FALSE steam_firewall "Steam LAN transfer over firewall" \
+          FALSE decky_loader "Install Decky Loader to SteamOS")
 
 if [ -n "$RESULT" ]; then
   case $RESULT in
@@ -384,6 +415,7 @@ if [ -n "$RESULT" ]; then
     "autostart") configure_autostart;;
     "polkit") configure_polkit_helpers;;
     "steam_firewall") enable_steam_lan_transfer;;
+    "decky_loader") configure_decky_loader;;
   esac
 
   if [ $? -eq 0 ]; then
