@@ -20,7 +20,7 @@ This script was validated with following configuration:
 Simply execute the following command in the terminal:
 
 ```bash
-sh -c "$(wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/web_setup.sh)" && cd \$HOME/.gamescope-setup && bash setup.sh
+sh -c "$(wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/web_setup.sh)" && cd $HOME/.gamescope-setup && bash setup.sh
 ```
 
 ## References
