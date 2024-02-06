@@ -366,16 +366,25 @@ configure_decky_loader() {
     show_admin_password_alert
   fi
 
+  # Assuring git
+  if ! command -v git > /dev/null; then
+    echo; echo "Installing git core on system..."
+    install "git-core"
+  fi
+
   # Assuring homebrew
-  if command -v brew > /dev/null; then
-    bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    ln -s /home/linuxbrew "$HOME/.homebrew"
+  if ! command -v brew > /dev/null; then
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> "$HOME/.bashrc"
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
   fi
 
   # Installing Decky loader
-  install "jq"
+  if ! command -v jq > /dev/null; then
+    install "jq"
+  fi
+
+  # Finally installing Decky Loader
   curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install_release.sh | sh
 }
 
