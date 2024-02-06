@@ -73,6 +73,8 @@ copy_installation_files() {
             normal) executable=false ;;
             *) executable=false ;;
         esac
+        # Replace $HOME in dest_file with the actual home folder path
+        dest_file="${dest_file/\$HOME/$HOME}"
         # Copy source file to destination file, replacing it if it already exists
         copy_local "$source_file" "$dest_file" "$executable"
     done < "$file_path"
