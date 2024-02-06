@@ -1,424 +1,152 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# set -e
-
-print() {
-  MESSAGE="$1"
-  echo >&2 "$MESSAGE"
-}
-
-replace_or_append() {
-  KEY="$1"
-  NEW_VALUE="$2"
-  FILE="$3"
-
-  if [ -f "$FILE" ]; then
-    sudo grep -Fq "$TEXT=" "$FILE" && \
-        sudo sed -i "s/\<$KEY\>=.*/$KEY=$NEW_VALUE/g" "$FILE" || \
-          echo "$KEY=$NEW_VALUE" | sudo tee -a "$FILE"
-  fi
-}
-
-show_admin_password_alert() {
-  zenity --info --no-wrap \
-    --text="Installation process may require your administrative password. Make sure to enter it when prompted in the terminal."
-}
-
-show_something_wrong() {
-  zenity --warning --no-wrap \
-    --text="Something went wrong with installation process. Please check terminal log and try again."
-}
-
-ask_reboot() {
-  if zenity --question --title="Reboot" --no-wrap \
-    --text="To make the configuration take effect, you need to reboot your machine. Do you want to proceed now?"; then
-    sudo reboot
-  fi
-}
-
-create_backup() {
-    FILE="$1"
-    BACKUP="${2:-true}"  # Default value is true if not provided
-    BACKUP_FILE="${FILE}.bak"
-
-    if [ ! -f "$BACKUP_FILE" ] && [ "$BACKUP" = true ] && [ -f "$FILE" ]; then
-        print "Creating a backup file $BACKUP_FILE for the original $FILE. You can further restore in case of error."
-        sudo cp "$FILE" "$BACKUP_FILE"
-    fi
-}
-
-restore_backup() {
-    FILE="$1"
-    BACKUP_FILE="${FILE}.bak"
-
-    if [ -f "$BACKUP_FILE" ]; then
-        print "Restoring backup file $BACKUP_FILE for the original $FILE."
-        sudo cp "$BACKUP_FILE" "$FILE"
-    fi
-}
+source setup/common.sh
 
 install() {
-  # Accept any number of package names as arguments
-  PACKAGES=("$@")
+  local package=$1
+  sudo zypper -n in $package
+}
 
-  for package in "${PACKAGES[@]}"; do
-    sudo zypper -n in "$package"
+# Function to install packages from a file
+install_packages_from_file() {
+  # Accepts file path as argument
+  local file_path=$1
+  local packages=()
 
-    # Check the exit status of the last command
-    if [ $? -ne 0 ]; then
-      echo "Error: Failed to install $package"
-      # Handle the error (exit or other actions as needed)
-      exit 1
+  if [ ! -f "$file_path" ]; then
+    echo "No packages to install"
+    return 1
+  fi
+
+  # Read file path contents line by line
+  while IFS= read -r line; do
+      # Split each line by whitespace
+      read -ra parts <<< "$line"
+      # Store everything in an array
+      packages+=("${parts[@]}")
+  done < "$file_path"
+
+  # Concatenate entire array separating each item by whitespace
+  local concatenated_packages="${packages[*]}"
+
+  # Echo all packages to be installed
+  echo "Packages to be installed: $concatenated_packages"
+
+  # Prepare command string concatenating "zypper -n in $concatenated_packages"
+  local command="sudo zypper -n in $concatenated_packages"
+
+  # Execute command
+  echo "Executing command: $command"
+  eval "$command"
+}
+
+# Function to execute additional scripts
+execute_script() {
+  # Accepts the script name as argument
+  local script_file=$1
+
+  if [ ! -f "$script_file" ]; then
+    echo "No script to execute"
+    return 1
+  fi
+
+  echo "Executing $script_file..."
+
+  # Prepare command
+  local command="bash $script_file"
+  eval "$command"
+}
+
+# Function to copy files and set permissions based on type
+copy_installation_files() {
+    local file_path="$1"
+
+    if [ ! -f "$file_path" ]; then
+      echo "No batch files to be copied"
+      return 1
     fi
-  done
+
+    while IFS=';' read -r source_file dest_file executable; do
+        # Decode executable
+        case "$executable" in
+            executable) executable=true ;;
+            normal) executable=false ;;
+            *) executable=false ;;
+        esac
+        # Copy source file to destination file, replacing it if it already exists
+        copy_local "$source_file" "$dest_file" "$executable"
+    done < "$file_path"
 }
 
-copy_local() {
-  SRC_FILE="$1"
-  DEST_FILE="$2"
-  EXECUTABLE="${3:-false}"
-
-  if [ -f "$DEST_FILE" ]; then
-    restore_backup "$DEST_FILE"
-    create_backup "$DEST_FILE"
-  fi
-
-  sudo mkdir -p "$(dirname "$DEST_FILE")"
-  cat "$SRC_FILE" | sudo tee "$DEST_FILE"
-
-  if [ "$EXECUTABLE" = "true" ]; then
-    sudo chmod +x "$DEST_FILE"
-  fi
-
-  print "File $DEST_FILE copied."
+# Function to convert options key into script file
+convert_key_to_script() {
+    # Convert spaces to underscores
+    local input=$(echo "$1" | sed 's/ /_/g')
+    # Convert to lowercase
+    input="${input,,}"
+    echo "$input"
 }
 
-# MAIN FUNCS -------------------------------------------------------------------
+# Function to parse setup options file
+parse_options_file() {
+    # Accepts file path as argument
+    local file_path=$1
+    local options=""
+    while IFS= read -r line; do
+      options+="FALSE $(echo $line | sed 's/;/ /g') "
+    done < "$file_path"
+    echo "${options[@]}"
+}
 
-enable_steam_lan_transfer() {
-  SHOW_ALERT="${1:-true}"
+# Function to display Zenity checklist
+show_checklist() {
+    # Accepts file path as argument
+    local options_file="$1"
+    local dialog_options=$(parse_options_file "$options_file")
 
-  if [ "$SHOW_ALERT" = "true" ]; then
+    # Define Zenity command as a string
+    local zenity_command="zenity --list --checklist --title='Setup Options' --text='Select options to install:' --column='Select' --column='Option' --column='Description' $dialog_options --separator=' '"
+
+    # Execute Zenity command and capture output
+    local choices=$(eval "$zenity_command")
+
+    # Process choices
+    for choice in $choices; do
+        # Extract key from the choice
+        key=$(echo "$choice" | cut -d '|' -f 1)
+
+        config_id=$(convert_key_to_script "$key")
+        pkg_file="setup/$config_id/$config_id.pkg"
+        batch_file="setup/$config_id/$config_id.batch"
+        script_file="setup/$config_id/$config_id.install"
+
+        echo "Starting $key setup..."
+
+        copy_installation_files $batch_file
+        install_packages_from_file $pkg_file
+        execute_script $script_file
+    done
+}
+
+# Main function
+main() {
     show_admin_password_alert
-  fi
 
-  NORMAL_LIST=(
-    "rootfs/etc/firewalld/services/steam-lan-streaming.xml"
-    "rootfs/etc/firewalld/services/steam-lan-transfer.xml"
-  )
+    # Check zenity availability
+    if ! command -v zenity > /dev/null; then
+      	print "zenity not installed. Script will proceed with installation."
+        install "zenity"
+    fi
 
-  for file_path in "${NORMAL_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" false
-
-    if [ $? -ne 0 ]; then
-      show_something_wrong
+    # Fetch installation options
+    local setup_file="setup/setup-options"
+    if [[ -f $setup_file ]]; then
+      show_checklist "$setup_file"
+    else
+      echo "Setup options file not found!"
       exit 1
     fi
-  done
-
-  # Reload firewalld to make sure it recognizes the new service
-  sudo firewall-cmd --reload
-
-  # Add the custom service to the public zone
-  sudo firewall-cmd --zone=public --add-service=steam-lan-streaming --permanent
-  sudo firewall-cmd --zone=public --add-service=steam-lan-transfer --permanent
-
-  # Reload firewalld again to apply the changes
-  sudo firewall-cmd --reload
 }
 
-configure_gamescope() {
-  configure_steam
-  install "gamescope" "mangoapp" "vkbasalt"
-
-  if [ $? -ne 0 ]; then
-    show_something_wrong
-    exit 1
-  fi
-
-  # Configuring gamescope-session
-  EXECUTABLE_LIST=(
-    "rootfs/lib/systemd/user/gamescope-session-plus@.service"
-    "rootfs/usr/bin/export-gpu"
-    "rootfs/usr/bin/gamescope-session-plus"
-    "rootfs/usr/bin/steam-http-loader"
-    "rootfs/usr/bin/steamos-restart-sddm"
-    "rootfs/usr/bin/steamos-select-branch"
-    "rootfs/usr/share/gamescope-session-plus/gamescope-session-plus"
-    "rootfs/usr/share/gamescope-session-plus/sessions.d/steam"
-    "rootfs/usr/share/gamescope-session-plus/device-quirks"
-  )
-
-  NORMAL_LIST=(
-    "rootfs/usr/share/wayland-sessions/gamescope-session.desktop"
-  )
-
-  for file_path in "${EXECUTABLE_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" true
-
-    if [ $? -ne 0 ]; then
-      show_something_wrong
-      exit 1
-    fi
-  done
-
-  for file_path in "${NORMAL_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" false
-
-    if [ $? -ne 0 ]; then
-      show_something_wrong
-      exit 1
-    fi
-  done
-
-  # Copying files from special folders
-  mkdir -p "$( dirname "$HOME/.config/environment.d/10-gamescope-session-custom.conf" )"
-  cp "rootfs/home/config/environment.d/10-gamescope-session-custom.conf" \
-    "$HOME/.config/environment.d/10-gamescope-session-custom.conf"
-
-  # Configure polkit rules and actions once it is needed by SteamOS
-  configure_polkit_helpers false
-
-  # Rebuilding application database
-  sudo update-desktop-database
-
-  # Ask for reboot to see new sessions
-  ask_reboot
-}
-
-configure_polkit_helpers() {
-  SHOW_ALERT="${1:-true}"
-
-  if [ "$SHOW_ALERT" = "true" ]; then
-    show_admin_password_alert
-  fi
-
-  # Adding current user to wheel group
-  sudo usermod -a -G wheel $USER
-
-  EXECUTABLE_LIST=(
-    "rootfs/usr/bin/steamos-polkit-helpers/jupiter-dock-updater"
-    "rootfs/usr/bin/steamos-polkit-helpers/steamos-poweroff-now"
-    "rootfs/usr/bin/steamos-polkit-helpers/steamos-reboot-now"
-    "rootfs/usr/bin/steamos-polkit-helpers/steamos-restart-sddm"
-    "rootfs/usr/bin/steamos-polkit-helpers/steamos-select-branch"
-    "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-hostname"
-    "rootfs/usr/bin/steamos-polkit-helpers/steamos-set-timezone"
-    "rootfs/usr/bin/steamos-polkit-helpers/steamos-update"
-  )
-
-  for file_path in "${EXECUTABLE_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" true
-
-    if [ $? -ne 0 ]; then
-      show_something_wrong
-      exit 1
-    fi
-  done
-
-  NORMAL_LIST=(
-    "rootfs/etc/polkit-1/rules.d/40-system-tweaks.rules"
-    "rootfs/usr/share/polkit-1/actions/org.valve.steamos.policy"
-    "rootfs/usr/share/polkit-1/rules.d/org.valve.steamos.rules"
-  )
-
-  for file_path in "${NORMAL_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" false
-
-    if [ $? -ne 0 ]; then
-      show_something_wrong
-      exit 1
-    fi
-  done
-
-  for file_path in "${DELETED[@]}"; do
-    if [ -f file_path ]; then
-      sudo rm -rf "${file_path/rootfs/}"
-    fi
-  done
-}
-
-configure_steam() {
-  show_admin_password_alert
-  install "steam" "steam-devices"
-
-  if [ $? -ne 0 ]; then
-    show_something_wrong
-    exit 1
-  fi
-
-  if [ $? -eq 0 ]; then
-    # Wait for Steam completion
-    steam --silent 2>&1 &
-    zenity --info --no-wrap \
-      --text="Please wait for the completion of the Steam initial setup, and then close the login window. There is no need to log in."
-  fi
-
-  if [ $? -eq 0 ]; then
-    # Fix Steam download speed
-    mkdir -p $HOME/.local/share/Steam
-    rm -f $HOME/.local/share/Steam/steam_dev.cfg
-    bash -c 'printf "@nClientDownloadEnableHTTP2PlatformLinux 0\n@fDownloadRateImprovementToAddAnotherConnection 1.0\n" > $HOME/.local/share/Steam/steam_dev.cfg'
-  fi
-
-  if [ $? -eq 0 ]; then
-    enable_steam_lan_transfer false
-  fi
-}
-
-configure_grub() {
-  show_admin_password_alert
-
-  GRUB_FILE="/etc/default/grub"
-  QUIET_CMD="quiet splash loglevel=2 acpi=nodefer"
-  OPTIMIZED_CMD=""
-
-  # Restore the previous backup to avoid GRUB misbehavior
-  restore_backup "$GRUB_FILE"
-  create_backup "$GRUB_FILE"
-
-  sudo sed -i "s/GRUB_TIMEOUT=[0-9]*/GRUB_TIMEOUT=0/g" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_HIDDEN_TIMEOUT=[0-9]*/GRUB_HIDDEN_TIMEOUT=0/g" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"$QUIET_CMD\"/g" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"$OPTIMIZED_CMD\"/g" "$GRUB_FILE"
-  sudo sed -i "s/GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/g" "$GRUB_FILE" || echo "GRUB_TIMEOUT_STYLE=hidden" | sudo tee -a "$GRUB_FILE"
-  sudo sed -i "s/GRUB_DISABLE_SUBMENU=.*/GRUB_DISABLE_SUBMENU=true/g" "$GRUB_FILE" || echo "GRUB_DISABLE_SUBMENU=true" | sudo tee -a "$GRUB_FILE"
-  sudo sed -i "s/GRUB_HIDDEN_TIMEOUT_QUIET=.*/GRUB_HIDDEN_TIMEOUT_QUIET=true/g" "$GRUB_FILE" || echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" | sudo tee -a "$GRUB_FILE"
-
-  # Update grub manually
-  sudo grub2-mkconfig -o /boot/grub2/grub.cfg
-
-  if [ $? -ne 0 ]; then
-    show_something_wrong
-    exit 1
-  fi
-
-  if [ $? -eq 0 ]; then
-    ask_reboot
-  fi
-}
-
-configure_autostart() {
-  SHOW_ALERT="${1:-true}"
-
-  if [ "$SHOW_ALERT" = "true" ]; then
-    show_admin_password_alert
-  fi
-
-  # Install SDDM as display manager
-  install "sddm"
-  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
-
-  # Copy Autologin Service files
-  EXECUTABLE_LIST=(
-    "rootfs/lib/systemd/system/steamos-autologin.service"
-    "rootfs/usr/libexec/steamos-autologin"
-    "rootfs/usr/bin/gnome-session-oneshot"
-    "rootfs/usr/bin/return-to-gamemode"
-    "rootfs/usr/bin/steamos-session-select"
-  )
-
-  for file_path in "${EXECUTABLE_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" true
-
-    if [ $? -ne 0 ]; then
-      show_something_wrong
-      exit 1
-    fi
-  done
-
-  NORMAL_LIST=(
-    "rootfs/etc/default/desktop-wayland"
-    "rootfs/etc/sddm.conf.d/steamos.conf"
-    "rootfs/etc/sudoers.d/zz-steamos-powerusers"
-    "rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop"
-    "rootfs/usr/share/applications/return-to-gamemode.desktop"
-  )
-
-  for file_path in "${NORMAL_LIST[@]}"; do
-    copy_local "$file_path" "${file_path/rootfs/}" false
-
-    if [ $? -ne 0 ]; then
-      show_something_wrong
-      exit 1
-    fi
-  done
-
-  # Attrib current user (which will run Gamescope session) to Power Users
-  sudo sed -i "s/username/$USER/g" "/etc/sudoers.d/zz-steamos-powerusers"
-
-  # Enabling necessary autologin service
-  sudo systemctl enable /lib/systemd/system/steamos-autologin.service
-
-  # create symbolic link for Steam auto start
-  cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
-  chmod +x "$HOME/.config/autostart/Steam.desktop"
-
-  if [ $? -eq 0 ]; then
-    ask_reboot
-  fi
-}
-
-configure_decky_loader() {
-  SHOW_ALERT="${1:-true}"
-
-  if [ "$SHOW_ALERT" = "true" ]; then
-    show_admin_password_alert
-  fi
-
-  # Assuring git
-  if ! command -v git > /dev/null; then
-    echo; echo "Installing git core on system..."
-    install "git-core"
-  fi
-
-  # Assuring homebrew
-  if ! command -v brew > /dev/null; then
-    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> "$HOME/.bashrc"
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-  fi
-
-  # Installing Decky loader
-  if ! command -v jq > /dev/null; then
-    install "jq"
-  fi
-
-  # Finally installing Decky Loader
-  curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install_release.sh | sh
-}
-
-# MAIN SECTION -----------------------------------------------------------------
-
-# Check zenity availability
-if ! command -v zenity > /dev/null; then
-  	print "zenity not installed. Script will proceed with installation."
-    install "zenity"
-fi
-
-RESULT=$(zenity --list --radiolist \
-          --title='Choose an option form list below' \
-          --column="Install" --column="Id" --column="Description" \
-          TRUE gamescope "Install and configure Gamescope Session (this will install Steam either)" \
-          FALSE steam "Install and configure standalone Steam" \
-          FALSE grub "Hide GRUB (for quiet and optmized boot)" \
-          FALSE autostart "Configure autostart for Gamescope Session / Steam on Desktop" \
-          FALSE polkit "Configure SteamOS polkit helpers" \
-          FALSE steam_firewall "Steam LAN transfer over firewall" \
-          FALSE decky_loader "Install Decky Loader to SteamOS")
-
-if [ -n "$RESULT" ]; then
-  case $RESULT in
-    "gamescope") configure_gamescope;;
-    "steam") configure_steam;;
-    "grub") configure_grub;;
-    "autostart") configure_autostart;;
-    "polkit") configure_polkit_helpers;;
-    "steam_firewall") enable_steam_lan_transfer;;
-    "decky_loader") configure_decky_loader;;
-  esac
-
-  if [ $? -eq 0 ]; then
-    print "Installation process completed for $RESULT"
-  fi
-fi
+# Execute main function
+main

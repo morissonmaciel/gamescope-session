@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+current_dir=$(dirname "$0")
+source "$current_dir/../common.sh"
+
+configure_decky_loader() {
+  # Assuring homebrew
+  if ! command -v brew > /dev/null; then
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> "$HOME/.bashrc"
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  fi
+
+  # Finally installing Decky Loader
+  curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install_release.sh | sh
+}
+
+configure_decky_loader
