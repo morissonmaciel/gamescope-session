@@ -20,10 +20,10 @@ This script was validated with following configuration:
 Simply execute the following command in the terminal:
 
 ```bash
-sh -c "$(wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/web_setup.sh)"
+sh -c "wget -qO- https://raw.githubusercontent.com/morissonmaciel/gamescope-session/main/web_setup.sh && cd \$HOME/.gamescope-setup && bash setup.sh"
 ```
 
 ## References
 - Gamescope [Valve Gamescope](https://github.com/ValveSoftware/gamescope)
-- [@DoomedSouls] [Gamescope embedded script](https://gist.github.com/DoomedSouls/e4015dffc08963a57c6adf3066f5a486)
-- [@ChimeraOS] [ChimeraOS Gamescope Session](https://github.com/ChimeraOS/gamescope-session)
+- @DoomedSouls [Gamescope embedded script](https://gist.github.com/DoomedSouls/e4015dffc08963a57c6adf3066f5a486)
+- @ChimeraOS [ChimeraOS Gamescope Session](https://github.com/ChimeraOS/gamescope-session)
