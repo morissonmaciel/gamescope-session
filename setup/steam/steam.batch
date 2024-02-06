@@ -1,0 +1,2 @@
+rootfs/etc/firewalld/services/steam-lan-streaming.xml;/etc/firewalld/services/steam-lan-streaming.xml;normal
+rootfs/etc/firewalld/services/steam-lan-transfer.xml;/etc/firewalld/services/steam-lan-transfer.xml;normal
