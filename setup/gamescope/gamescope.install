@@ -4,8 +4,8 @@ current_dir=$(dirname "$0")
 source "$current_dir/../common.sh"
 
 configure_autostart() {
-    # Configure SDDM as display manager
-    sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
+    # Configure lightdm as display manager
+    sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/lightdm
 
     # Attrib current user (which will run Gamescope session) to Power Users
     sudo sed -i "s/username/$USER/g" "/etc/sudoers.d/zz-steamos-powerusers"
