@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if git is installed
-if ! command -v git &> /dev/null; then
+if ! command -v git &>/dev/null; then
     echo "Git is not installed. Installing..."
     # Install git
     if ! sudo zypper in git-core; then

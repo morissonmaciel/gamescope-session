@@ -4,35 +4,35 @@ current_dir=$(dirname "$0")
 source "$current_dir/../common.sh"
 
 configure_autostart() {
-  # Configure SDDM as display manager
-  sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
+    # Configure SDDM as display manager
+    sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
 
-  # Attrib current user (which will run Gamescope session) to Power Users
-  sudo sed -i "s/username/$USER/g" "/etc/sudoers.d/zz-steamos-powerusers"
+    # Attrib current user (which will run Gamescope session) to Power Users
+    sudo sed -i "s/username/$USER/g" "/etc/sudoers.d/zz-steamos-powerusers"
 
-  # Enabling necessary autologin service
-  sudo systemctl enable /lib/systemd/system/steamos-autologin.service
+    # Enabling necessary autologin service
+    sudo systemctl enable /lib/systemd/system/steamos-autologin.service
 
-  # create symbolic link for Steam auto start
-  cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
-  chmod +x "$HOME/.config/autostart/Steam.desktop"
+    # create symbolic link for Steam auto start
+    cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
+    chmod +x "$HOME/.config/autostart/Steam.desktop"
 }
 
 configure_polkit_helpers() {
-  # Adding current user to wheel group
-  sudo usermod -a -G wheel $USER
+    # Adding current user to wheel group
+    sudo usermod -a -G wheel $USER
 }
 
 configure_gamescope() {
-  # Configure polkit rules and autostart for SteamOS
-  configure_polkit_helpers
-  configure_autostart
+    # Configure polkit rules and autostart for SteamOS
+    configure_polkit_helpers
+    configure_autostart
 
-  # Rebuilding application database
-  sudo update-desktop-database
+    # Rebuilding application database
+    sudo update-desktop-database
 
-  # Ask for reboot to see new sessions
-  ask_reboot
+    # Ask for reboot to see new sessions
+    ask_reboot
 }
 
 configure_gamescope
