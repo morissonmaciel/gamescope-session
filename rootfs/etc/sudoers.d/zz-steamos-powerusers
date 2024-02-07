@@ -1,4 +1,7 @@
-User_Alias	STEAMOS_POWERGROUP = username
+User_Alias      STEAMOS_POWERGROUP = username
 
-Cmnd_Alias	POWER = /sbin/shutdown, /sbin/halt, /sbin/reboot, /sbin/restart
-STEAMOS_POWERGROUP	ALL = POWER
+Cmnd_Alias      POWER = /sbin/shutdown, /sbin/halt, /sbin/reboot, /sbin/restart
+
+STEAMOS_POWERGROUP      ALL = POWER
+
+username ALL=(ALL) NOPASSWD: /usr/bin/systemctl start return-to-gamemode.service

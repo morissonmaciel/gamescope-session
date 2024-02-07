@@ -27,15 +27,17 @@ rootfs/usr/share/polkit-1/rules.d/org.valve.steamos.rules ; /usr/share/polkit-1/
 
 # autologin files
 rootfs/usr/libexec/steamos-autologin ; /usr/libexec/steamos-autologin ; executable
+rootfs/usr/libexec/return-to-gamemode; /usr/libexec/return-to-gamemode ; executable
 rootfs/usr/bin/gnome-session-oneshot ; /usr/bin/gnome-session-oneshot ; executable
 rootfs/usr/bin/return-to-gamemode ; /usr/bin/return-to-gamemode ; executable
 rootfs/usr/bin/steamos-session-select ; /usr/bin/steamos-session-select ; executable
 rootfs/etc/default/desktop-wayland ; /etc/default/desktop-wayland ; normal
-rootfs/etc/sddm.conf.d/steamos.conf ; /etc/sddm.conf.d/steamos.conf ; normal
+rootfs/usr/share/lightdm/lightdm.conf.d/steamos.conf ; /usr/share/lightdm/lightdm.conf.d/steamos.conf ; normal
 rootfs/etc/sudoers.d/zz-steamos-powerusers ; /etc/sudoers.d/zz-steamos-powerusers ; normal
 rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop ; /usr/share/wayland-sessions/gnome-wayland-oneshot.desktop ; normal
 rootfs/usr/share/applications/return-to-gamemode.desktop ; /usr/share/applications/return-to-gamemode.desktop ; normal
 
 # system services
 rootfs/lib/systemd/system/steamos-autologin.service ; /lib/systemd/system/steamos-autologin.service ; executable
+rootfs/lib/systemd/system/return-to-gamemode.service ; /lib/systemd/system/return-to-gamemode.service ; executable
 rootfs/lib/systemd/user/gamescope-session-plus@.service ; /lib/systemd/user/gamescope-session-plus@.service ; executable

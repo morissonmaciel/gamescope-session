@@ -4,18 +4,15 @@ current_dir=$(dirname "$0")
 source "$current_dir/../common.sh"
 
 configure_autostart() {
-    # Configure SDDM as display manager
-    sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/sddm
+    # Configure lightdm as display manager
+    sudo update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/lightdm
 
     # Attrib current user (which will run Gamescope session) to Power Users
     sudo sed -i "s/username/$USER/g" "/etc/sudoers.d/zz-steamos-powerusers"
 
     # Enabling necessary autologin service
     sudo systemctl enable /lib/systemd/system/steamos-autologin.service
-
-    # create symbolic link for Steam auto start
-    cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
-    chmod +x "$HOME/.config/autostart/Steam.desktop"
+    sudo systemctl enable /lib/systemd/system/return-to-gamemode.service
 }
 
 configure_polkit_helpers() {
