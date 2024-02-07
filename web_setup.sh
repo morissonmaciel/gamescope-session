@@ -13,6 +13,9 @@ fi
 # Define repository URL
 repo_url="https://github.com/morissonmaciel/gamescope-session.git"
 
+# Remove existing setup folder
+rm -rf "$HOME/.gamescope-setup"
+
 # Clone the repository into $HOME/.gamescope-setup
 if ! git clone "$repo_url" "$HOME/.gamescope-setup"; then
     echo "Cloning failed. Downloading zip archive..."

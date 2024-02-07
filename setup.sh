@@ -1,10 +1,57 @@
-#!/usr/bin/env bash
+#!/usr/bin bash
 
 source setup/common.sh
 
 install() {
     local package=$1
     sudo zypper -n in $package
+}
+
+# Function to copy files and set permissions based on type
+copy_installation_files() {
+    while IFS=';' read -r source dest type; do
+        # Skip blank lines and lines starting with #
+        if [[ -z $source || $source == "#"* ]]; then
+            continue
+        fi
+
+        # Trim leading and trailing whitespace from entries
+        source=$(echo "$source" | sed 's/^[ \t]*//;s/[ \t]*$//')
+        dest=$(echo "$dest" | sed 's/^[ \t]*//;s/[ \t]*$//')
+        type=$(echo "$type" | sed 's/^[ \t]*//;s/[ \t]*$//')
+
+        # Check if destination starts with $HOME
+        if [[ $dest == \$HOME* ]]; then
+            dest="${HOME}${dest:6}"
+            use_sudo="false"
+        else
+            use_sudo="true"
+        fi
+
+        # Create destination directory
+        dest_dir=$(dirname "$dest")
+        if [[ $use_sudo -eq "true" ]]; then
+            sudo mkdir -p "$dest_dir"
+        else
+            mkdir -p "$dest_dir"
+        fi
+
+        # Copy source file to destination
+        if [[ $use_sudo -eq "true" ]]; then
+            sudo cp "$source" "$dest"
+        else
+            cp "$source" "$dest"
+        fi
+
+        # Set permissions if executable
+        if [[ $type == "executable" ]]; then
+            if [[ $use_sudo -eq "true" ]]; then
+                sudo chmod +x "$dest"
+            else
+                chmod +x "$dest"
+            fi
+        fi
+    done < "$1"
 }
 
 # Function to install packages from a file
@@ -55,29 +102,6 @@ execute_script() {
     # Prepare command
     local command="bash $script_file"
     eval "$command"
-}
-
-# Function to copy files and set permissions based on type
-copy_installation_files() {
-    local file_path="$1"
-
-    if [ ! -f "$file_path" ]; then
-        echo "No batch files to be copied"
-        return 1
-    fi
-
-    while IFS=';' read -r source_file dest_file executable; do
-        # Decode executable
-        case "$executable" in
-        "executable") executable=true ;;
-        "normal") executable=false ;;
-        *) executable=false ;;
-        esac
-        # Replace $HOME in dest_file with the actual home folder path
-        dest_file="${dest_file/\$HOME/$HOME}"
-        # Copy source file to destination file, replacing it if it already exists
-        copy_local "$source_file" "$dest_file" "$executable"
-    done <"$file_path"
 }
 
 # Function to convert options key into script file
