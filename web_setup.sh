@@ -20,7 +20,7 @@ rm -rf "$HOME/.gamescope-setup"
 if ! git clone "$repo_url" "$HOME/.gamescope-setup"; then
     echo "Cloning failed. Downloading zip archive..."
     # Download zip archive
-    if ! wget -O "$HOME/.gamescope-setup/archive.zip" "https://github.com/morissonmaciel/gamescope-session/archive/refs/tags/v0.11.zip"; then
+    if ! wget -O "$HOME/.gamescope-setup/archive.zip" "https://github.com/morissonmaciel/gamescope-session/archive/refs/tags/v0.12.zip"; then
         echo "Failed to download zip archive."
         exit 1
     fi
