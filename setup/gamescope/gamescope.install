@@ -12,10 +12,6 @@ configure_autostart() {
 
     # Enabling necessary autologin service
     sudo systemctl enable /lib/systemd/system/steamos-autologin.service
-
-    # create symbolic link for Steam auto start
-    cp "/usr/share/applications/steam.desktop" "$HOME/.config/autostart/Steam.desktop"
-    chmod +x "$HOME/.config/autostart/Steam.desktop"
 }
 
 configure_polkit_helpers() {

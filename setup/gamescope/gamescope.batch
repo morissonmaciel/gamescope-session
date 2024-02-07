@@ -31,7 +31,7 @@ rootfs/usr/bin/gnome-session-oneshot ; /usr/bin/gnome-session-oneshot ; executab
 rootfs/usr/bin/return-to-gamemode ; /usr/bin/return-to-gamemode ; executable
 rootfs/usr/bin/steamos-session-select ; /usr/bin/steamos-session-select ; executable
 rootfs/etc/default/desktop-wayland ; /etc/default/desktop-wayland ; normal
-rootfs/etc/sddm.conf.d/steamos.conf ; /etc/sddm.conf.d/steamos.conf ; normal
+rootfs/usr/share/lightdm/lightdm.conf.d/steamos.conf ; /usr/share/lightdm/lightdm.conf.d/steamos.conf ; normal
 rootfs/etc/sudoers.d/zz-steamos-powerusers ; /etc/sudoers.d/zz-steamos-powerusers ; normal
 rootfs/usr/share/wayland-sessions/gnome-wayland-oneshot.desktop ; /usr/share/wayland-sessions/gnome-wayland-oneshot.desktop ; normal
 rootfs/usr/share/applications/return-to-gamemode.desktop ; /usr/share/applications/return-to-gamemode.desktop ; normal

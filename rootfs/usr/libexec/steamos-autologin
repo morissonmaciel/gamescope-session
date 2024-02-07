@@ -9,9 +9,9 @@ BASE_IMAGE_NAME="silverblue"
 USER=$(id -nu 1000)
 HOME=$(getent passwd $USER | cut -d: -f6)
 
-# SteamOS SDDM config
-SDDM_CONF='/etc/sddm.conf.d/steamos.conf'
-AUTOLOGIN_CONF='/etc/sddm.conf.d/zz-steamos-autologin.conf'
+# SteamOS lightdm config
+CONF_FILE='/usr/share/lightdm/lightdm.conf.d/steamos.conf'
+AUTOLOGIN_CONF='/usr/share/lightdm/lightdm.conf.d/zz-steamos-autologin.conf'
 DESKTOP_AUTOLOGIN='/etc/bazzite/desktop_autologin'
 
 # Avoid autologin conflict
@@ -20,19 +20,19 @@ if [[ -f ${AUTOLOGIN_CONF} ]]; then
 fi
 
 # Configure autologin if Steam has been updated
-if [[ ! -f ${DESKTOP_AUTOLOGIN} && -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]]; then
-  sed -i 's/.*Session=.*/Session=gamescope-session.desktop/g' ${SDDM_CONF}
+if [ -f $HOME/.local/share/Steam/ubuntu12_32/steamui.so ]; then
+  sed -i 's/.*autologin-session=.*/autologin-session=gamescope-session/g' ${CONF_FILE}
 elif [[ ${BASE_IMAGE_NAME} =~ "kinoite" ]]; then
   if ${DESKTOP_WAYLAND}; then
-    sed -i 's/.*Session=.*/Session=plasma.desktop/g' ${SDDM_CONF}
+    sed -i 's/.*autologin-session=.*/autologin-session=plasma/g' ${CONF_FILE}
   else
-    sed -i 's/.*Session=.*/Session=plasmax11.desktop/g' ${SDDM_CONF}
+    sed -i 's/.*autologin-session=.*/autologin-session=plasmax11/g' ${CONF_FILE}
   fi
 elif [[ ${BASE_IMAGE_NAME} =~ "silverblue" ]]; then
   if ${DESKTOP_WAYLAND}; then
-    sed -i 's/.*Session=.*/Session=gnome-wayland.desktop/g' ${SDDM_CONF}
+    sed -i 's/.*autologin-session=.*/autologin-session=gnome-wayland/g' ${CONF_FILE}
   else
-    sed -i 's/.*Session=.*/Session=gnome-xorg.desktop/g' ${SDDM_CONF}
+    sed -i 's/.*autologin-session=.*/autologin-session=gnome-xorg/g' ${CONF_FILE}
   fi
 fi
-sed -i 's/.*User=.*/User='${USER}'/g' ${SDDM_CONF}
+sed -i 's/.*autologin-user=.*/autologin-user='${USER}'/g' ${CONF_FILE}
