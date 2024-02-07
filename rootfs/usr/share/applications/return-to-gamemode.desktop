@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=Return to Gamemode
 Comment=Return to gamescope custom gamemode session
-Exec=/usr/bin/return-to-gamemode
-TryExec=/usr/bin/return-to-gamemode
+Exec=sh -c "sudo systemctl start return-to-gamemode"
+TryExec=sh -c "sudo systemctl start return-to-gamemode"
 Type=Application
 DesktopNames=Gamemode
 Icon=steam

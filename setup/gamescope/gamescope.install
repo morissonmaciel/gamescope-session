@@ -12,6 +12,7 @@ configure_autostart() {
 
     # Enabling necessary autologin service
     sudo systemctl enable /lib/systemd/system/steamos-autologin.service
+    sudo systemctl enable /lib/systemd/system/return-to-gamemode.service
 }
 
 configure_polkit_helpers() {

@@ -38,4 +38,5 @@ rootfs/usr/share/applications/return-to-gamemode.desktop ; /usr/share/applicatio
 
 # system services
 rootfs/lib/systemd/system/steamos-autologin.service ; /lib/systemd/system/steamos-autologin.service ; executable
+rootfs/lib/systemd/system/return-to-gamemode.service ; /lib/systemd/system/return-to-gamemode.service ; executable
 rootfs/lib/systemd/user/gamescope-session-plus@.service ; /lib/systemd/user/gamescope-session-plus@.service ; executable
