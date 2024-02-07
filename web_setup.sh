@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if git is installed
-if ! command -v git &> /dev/null; then
+if ! command -v git &>/dev/null; then
     echo "Git is not installed. Installing..."
     # Install git
     if ! sudo zypper in git-core; then
@@ -12,6 +12,9 @@ fi
 
 # Define repository URL
 repo_url="https://github.com/morissonmaciel/gamescope-session.git"
+
+# Remove existing setup folder
+rm -rf "$HOME/.gamescope-setup"
 
 # Clone the repository into $HOME/.gamescope-setup
 if ! git clone "$repo_url" "$HOME/.gamescope-setup"; then
