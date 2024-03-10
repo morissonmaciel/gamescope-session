@@ -19,8 +19,16 @@ configure_grub() {
     ask_reboot
 }
 
+configure_alsa() {
+    sudo zypper remove -y pulseaudio
+    sudo zypper in -y pipewire pipewire-pulse pipewire-alsa pipewire-jack pipewire-zeroconf pavucontrol alsa-utils alsa-plugins alsa-lib alsa-firmware gstreamer
+
+    ask_reboot
+}
+
 show_tweaks_options() {
-    local dialog_options='FALSE "grub" "Configure simplified GRUB start"'
+    local dialog_options='FALSE "grub" "Configure simplified GRUB start" \
+        FALSE "alsa" "Configure pipewire for pulseaudio and alsa"'
 
     # Define Zenity command as a string
     local zenity_command="zenity --list --checklist --title='Setup Options' --text='Select options to install:' --column='Select' --column='Option' --column='Description' $dialog_options --separator=' '"
@@ -36,6 +44,7 @@ show_tweaks_options() {
 
         case $choice in
         "grub") configure_grub ;;
+        "alsa") configure_alsa ;;
         esac
     done
 }
